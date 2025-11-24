@@ -1,0 +1,608 @@
+///////////////////////////////////////////////////////////
+// DATASOURCE & GENERATOR
+///////////////////////////////////////////////////////////
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+///////////////////////////////////////////////////////////
+// USER = ACCOUNT (ĐĂNG NHẬP)
+///////////////////////////////////////////////////////////
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("CUSTOMER") // ADMIN / STAFF / CUSTOMER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer Customer?
+  employee Employee?
+
+  passwordResetTokens PasswordResetToken[]
+}
+
+///////////////////////////////////////////////////////////
+// CUSTOMER (14 field + avatar)
+///////////////////////////////////////////////////////////
+model Customer {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  fullName String
+  phone    String
+  email    String?
+  address  String?
+
+  driverLicenseNo     String?
+  driverLicenseExpiry DateTime?
+  nationalId          String?
+  nationality         String?
+
+  loyaltyPoints  Int    @default(0)
+  membershipTier String @default("BASIC")
+  totalSpent     Float  @default(0)
+
+  avatarUrl String?
+  userId    String? @unique @db.ObjectId
+  user      User?   @relation(fields: [userId], references: [id])
+
+  bookings Booking[]
+  invoices Invoice[]
+  reviews  Review[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Deposit   Deposit[]
+}
+
+///////////////////////////////////////////////////////////
+// EMPLOYEE
+///////////////////////////////////////////////////////////
+model Employee {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  fullName   String
+  phone      String?
+  email      String?
+  nationalId String?
+
+  department String?
+  position   String?
+  salary     Float?
+  status     String    @default("ACTIVE")
+  hireDate   DateTime?
+
+  avatarUrl String?
+
+  userId String? @unique @db.ObjectId
+  user   User?   @relation(fields: [userId], references: [id])
+
+  branchId String? @db.ObjectId
+  branch   Branch? @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authoredPosts BlogPost[]
+}
+
+///////////////////////////////////////////////////////////
+// BRANCH
+///////////////////////////////////////////////////////////
+model Branch {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  code    String? @unique
+  address String?
+  city    String?
+  country String?
+  phone   String?
+  email   String?
+
+  latitude      Float?
+  longitude     Float?
+  googleMapUrl  String?
+  businessHours String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles  Vehicle[]
+  employees Employee[]
+  bookings  Booking[]
+
+  returnBranchBookings Booking[]      @relation("ReturnBranch")
+  returnReportBranches ReturnReport[] @relation("ReturnReportBranch")
+}
+
+///////////////////////////////////////////////////////////
+// VEHICLE CATEGORY
+///////////////////////////////////////////////////////////
+model VehicleCategory {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  code        String? @unique
+  description String?
+
+  imageUrl        String?
+  metaTitle       String?
+  metaDescription String?
+  seoTitle        String?
+  hTitle          String?
+  displayOrder    Int?    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles Vehicle[]
+}
+
+///////////////////////////////////////////////////////////
+// PRICE LIST
+///////////////////////////////////////////////////////////
+model PriceList {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  currency    String  @default("VND")
+
+  dailyRate   Float
+  hourlyRate  Float?
+  weekendRate Float?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles Vehicle[]
+}
+
+///////////////////////////////////////////////////////////
+// VEHICLE
+///////////////////////////////////////////////////////////
+model Vehicle {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name         String
+  vehicleType  String?
+  licensePlate String  @unique
+  brand        String?
+  model        String?
+  year         Int?
+  color        String?
+  seatCount    Int?
+  transmission String?
+  fuelType     String?
+  mileage      Int?
+  status       String  @default("AVAILABLE")
+
+  slug            String? @unique
+  metaTitle       String?
+  metaDescription String?
+  seoDescription  String?
+  rating          Float?  @default(0)
+  reviewCount     Int?    @default(0)
+
+  photos String[]
+
+  categoryId  String  @db.ObjectId
+  branchId    String  @db.ObjectId
+  priceListId String? @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category  VehicleCategory @relation(fields: [categoryId], references: [id])
+  branch    Branch          @relation(fields: [branchId], references: [id])
+  priceList PriceList?      @relation(fields: [priceListId], references: [id])
+
+  vehicleDocuments VehicleDocument[]
+  maintenances     Maintenance[]
+  bookings         Booking[]
+  reviews          Review[]
+}
+
+///////////////////////////////////////////////////////////
+// VEHICLE DOCUMENT
+///////////////////////////////////////////////////////////
+model VehicleDocument {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId String @db.ObjectId
+
+  docType      String
+  documentName String?
+  number       String?
+  fileUrl      String?
+  issuedAt     DateTime?
+  expiresAt    DateTime?
+  notes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// BOOKING
+///////////////////////////////////////////////////////////
+model Booking {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  bookingCode String @unique
+
+  customerId     String  @db.ObjectId
+  vehicleId      String  @db.ObjectId
+  branchId       String  @db.ObjectId
+  returnBranchId String? @db.ObjectId
+
+  pickupDate DateTime
+  returnDate DateTime
+
+  status String @default("PENDING")
+
+  baseAmount     Float
+  discountAmount Float @default(0)
+  totalAmount    Float
+
+  promotionId  String? @db.ObjectId
+  cancelReason String?
+  note         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer     Customer @relation(fields: [customerId], references: [id])
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id])
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  returnBranch Branch?  @relation("ReturnBranch", fields: [returnBranchId], references: [id])
+
+  contract     Contract?
+  deposit      Deposit?
+  handover     Handover?
+  returnReport ReturnReport?
+  invoice      Invoice?
+  review       Review?       @relation(fields: [reviewId], references: [id])
+  reviewId     String?       @db.ObjectId
+}
+
+///////////////////////////////////////////////////////////
+// CONTRACT
+///////////////////////////////////////////////////////////
+model Contract {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId String @unique @db.ObjectId
+
+  contractNo String @unique
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  totalAmount   Float?
+  depositAmount Float?
+
+  terms             String?
+  customerSignature String?
+  employeeSignature String?
+  signedBy          String?
+  notes             String?
+
+  status  String  @default("DRAFT")
+  fileUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// DEPOSIT
+///////////////////////////////////////////////////////////
+model Deposit {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  bookingId  String @unique @db.ObjectId
+  customerId String @db.ObjectId
+
+  totalAmount Float
+  status      String  @default("HELD")
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  items DepositDetail[]
+}
+
+///////////////////////////////////////////////////////////
+// DEPOSIT DETAIL
+///////////////////////////////////////////////////////////
+model DepositDetail {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  depositId String @db.ObjectId
+
+  itemType   String
+  itemName   String?
+  identifier String?
+  amount     Float?
+  condition  String?
+  photoUrls  String[]
+  notes      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deposit Deposit @relation(fields: [depositId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// HANDOVER
+///////////////////////////////////////////////////////////
+model Handover {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  bookingId String @unique @db.ObjectId
+
+  odoStart          Int?
+  fuelLevelStart    Int?
+  pickupPlace       String?
+  exteriorStatus    String?
+  interiorStatus    String?
+  damageNote        String?
+  accessories       String?
+  customerSignature String?
+  handedOverBy      String?
+
+  photoUrls String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// RETURN REPORT
+///////////////////////////////////////////////////////////
+model ReturnReport {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  bookingId String @unique @db.ObjectId
+
+  odoEnd         Int?
+  fuelLevelEnd   Int?
+  damageNote     String?
+  extraCharge    Float?
+  condition      String?
+  checklist      String?
+  returnBranchId String? @db.ObjectId
+
+  note      String?
+  photoUrls String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  booking      Booking @relation(fields: [bookingId], references: [id])
+  returnBranch Branch? @relation("ReturnReportBranch", fields: [returnBranchId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// INVOICE
+///////////////////////////////////////////////////////////
+model Invoice {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  invoiceNo  String @unique
+  bookingId  String @unique @db.ObjectId
+  customerId String @db.ObjectId
+
+  issueDate DateTime @default(now())
+
+  subtotal       Float
+  surchargeTotal Float @default(0)
+  discountTotal  Float @default(0)
+  totalAmount    Float
+
+  status String  @default("UNPAID")
+  notes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  payments   Payment[]
+  surcharges Surcharge[]
+}
+
+///////////////////////////////////////////////////////////
+// PAYMENT
+///////////////////////////////////////////////////////////
+model Payment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  invoiceId   String   @db.ObjectId
+  paidAt      DateTime @default(now())
+  method      String
+  amount      Float
+  referenceNo String?
+  note        String?
+  status      String   @default("SUCCESS")
+
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// SURCHARGE
+///////////////////////////////////////////////////////////
+model Surcharge {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  invoiceId String @db.ObjectId
+
+  name          String
+  description   String?
+  amount        Float
+  surchargeType String?
+  evidenceUrl   String?
+  occurredAt    DateTime?
+  createdBy     String?
+  status        String    @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// MAINTENANCE
+///////////////////////////////////////////////////////////
+model Maintenance {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId String @db.ObjectId
+
+  title             String
+  description       String?
+  maintenanceDate   DateTime
+  odometer          Int?
+  performedBy       String?
+  cost              Float?
+  status            String    @default("DONE")
+  nextMaintenanceAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// AUDIT LOG
+///////////////////////////////////////////////////////////
+model AuditLog {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId     String?  @db.ObjectId
+  module     String
+  action     String
+  entityId   String?
+  entityType String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
+
+///////////////////////////////////////////////////////////
+// REVIEW
+///////////////////////////////////////////////////////////
+model Review {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  bookingId  String? @unique @db.ObjectId
+  customerId String  @db.ObjectId
+  vehicleId  String  @db.ObjectId
+
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  customer Customer  @relation(fields: [customerId], references: [id])
+  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id])
+  Booking  Booking[]
+}
+
+///////////////////////////////////////////////////////////
+// BLOG CATEGORY
+///////////////////////////////////////////////////////////
+model BlogCategory {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name        String
+  slug        String  @unique
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts BlogPost[]
+}
+
+///////////////////////////////////////////////////////////
+// BLOG POST
+///////////////////////////////////////////////////////////
+model BlogPost {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  categoryId String? @db.ObjectId
+  authorId   String? @db.ObjectId
+
+  title        String
+  slug         String  @unique
+  content      String
+  excerpt      String?
+  thumbnailUrl String?
+  status       String  @default("DRAFT")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category BlogCategory? @relation(fields: [categoryId], references: [id])
+  author   Employee?     @relation(fields: [authorId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// PAGE (FAQ, ABOUT, TERMS...)
+///////////////////////////////////////////////////////////
+model Page {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  title   String
+  slug    String @unique
+  content String
+  status  String @default("PUBLISHED")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+///////////////////////////////////////////////////////////
+// PASSWORD RESET TOKEN
+///////////////////////////////////////////////////////////
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  token     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// SYSTEM CONFIG
+///////////////////////////////////////////////////////////
+model SystemConfig {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  key         String  @unique
+  value       String
+  description String?
+
+  updatedBy String?  @db.ObjectId
+  updatedAt DateTime @default(now())
+}

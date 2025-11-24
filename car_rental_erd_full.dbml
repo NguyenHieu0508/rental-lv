@@ -1,0 +1,614 @@
+// CAR RENTAL MANAGEMENT SYSTEM - FULL ERD (35 TABLES)
+// Copy code này và paste vào https://dbdiagram.io
+
+// ========================================
+// CORE BUSINESS (20 TABLES)
+// ========================================
+
+Table VehicleCategory {
+  CategoryID varchar(50) [pk]
+  CategoryName varchar(100) [not null]
+  CategoryCode varchar(50) [unique, not null]
+  Description text
+  Seats int [not null]
+  ImageURLs text
+  Features text
+  Status varchar(20) [not null, default: 'ACTIVE']
+  DisplayOrder int [not null, default: 0]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+  // SEO Fields
+  Slug varchar(255) [unique]
+  MetaTitle varchar(60)
+  MetaDescription varchar(160)
+  SeoContent text
+  H1Title varchar(255)
+}
+
+Table Vehicle {
+  VehicleID varchar(50) [pk]
+  VehicleName varchar(255) [not null]
+  VehicleType varchar(100) [not null]
+  BranchID varchar(50) [not null]
+  Status varchar(20) [not null, default: 'AVAILABLE']
+  FuelType varchar(50) [not null]
+  PriceListID varchar(50) [not null]
+  Mileage int [not null]
+  ImageURLs text
+  Seats int [not null]
+  Transmission varchar(20) [not null]
+  Color varchar(50) [not null]
+  Year int [not null]
+  LicensePlate varchar(50) [unique, not null]
+  // SEO Fields
+  Slug varchar(255) [unique]
+  MetaTitle varchar(60)
+  MetaDescription varchar(160)
+  SeoDescription text
+  ViewCount int [default: 0]
+  Rating decimal(3,2) [default: 0.0]
+  ReviewCount int [default: 0]
+}
+
+Table VehicleDocument {
+  VehicleDocumentID varchar(50) [pk]
+  VehicleDocumentName varchar(255) [not null]
+  VehicleID varchar(50) [not null]
+  DocNumber varchar(100) [unique, not null]
+  ExpiredAt datetime [not null]
+}
+
+Table Branch {
+  BranchID varchar(50) [pk]
+  BranchName varchar(255) [not null]
+  Address text [not null]
+  Email varchar(255) [unique, not null]
+  Status varchar(20) [not null, default: 'ACTIVE']
+  ManagerID varchar(50)
+  Phone varchar(20) [not null]
+  // Local SEO
+  Slug varchar(255) [unique]
+  Latitude decimal(10,8)
+  Longitude decimal(11,8)
+  GoogleMapURL varchar(500)
+  BusinessHours text
+  MetaTitle varchar(60)
+  MetaDescription varchar(160)
+}
+
+Table PriceList {
+  PriceListID varchar(50) [pk]
+  VehicleType varchar(100) [not null]
+  PricePerDay decimal(15,2) [not null]
+}
+
+Table Customer {
+  CustomerID varchar(50) [pk]
+  CustomerName varchar(255) [not null]
+  CustomerPhone varchar(20) [unique, not null]
+  CustomerEmail varchar(255) [unique, not null]
+  CustomerAddress text [not null]
+  DriverLicenseNo varchar(50) [unique, not null]
+  DriverLicenseExpiry datetime [not null]
+  DateOfBirth datetime [not null]
+  NationalID varchar(50) [unique, not null]
+  AccountID varchar(50)
+  // Loyalty
+  LoyaltyPoints int [default: 0]
+  MembershipTier varchar(20) [default: 'BASIC']
+  TotalSpent decimal(15,2) [default: 0]
+}
+
+Table Employee {
+  EmployeeID varchar(50) [pk]
+  EmployeeName varchar(255) [not null]
+  Phone varchar(20) [unique, not null]
+  Email varchar(255) [unique, not null]
+  NationalID varchar(50) [unique, not null]
+  BranchID varchar(50) [not null]
+  Position varchar(100) [not null]
+  Department varchar(100) [not null]
+  HireDate datetime [not null]
+  Salary decimal(15,2) [not null]
+  Status varchar(20) [not null, default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+  AccountID varchar(50)
+}
+
+Table Account {
+  AccountID varchar(50) [pk]
+  AccountName varchar(255) [unique, not null]
+  Role varchar(50) [not null]
+  Password varchar(255) [not null]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+  Status varchar(20) [not null, default: 'ACTIVE']
+}
+
+Table Booking {
+  BookingID varchar(50) [pk]
+  CustomerID varchar(50) [not null]
+  BranchID varchar(50) [not null]
+  VehicleID varchar(50) [not null]
+  StartDate datetime [not null]
+  EndDate datetime [not null]
+  PickupBranchID varchar(50) [not null]
+  ReturnBranchID varchar(50) [not null]
+  DepositAmount decimal(15,2) [not null]
+  TotalAmount decimal(15,2) [not null]
+  Status varchar(20) [not null, default: 'PENDING']
+  CancelledAt datetime
+  CancelReason text
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table Contract {
+  ContractID varchar(50) [pk]
+  BookingID varchar(50) [not null]
+  ContractNumber varchar(100) [unique, not null]
+  ContractDate datetime [not null]
+  StartDate datetime [not null]
+  EndDate datetime [not null]
+  TotalAmount decimal(15,2) [not null]
+  DepositAmount decimal(15,2) [not null]
+  Terms text [not null]
+  CustomerSignature text [not null]
+  EmployeeSignature text [not null]
+  SignedBy varchar(50) [not null]
+  FileURL text
+  Status varchar(20) [not null, default: 'DRAFT']
+  Notes text
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table Deposit {
+  DepositID varchar(50) [pk]
+  BookingID varchar(50) [not null]
+  Type varchar(50) [not null]
+  Amount decimal(15,2) [not null]
+  Status varchar(20) [not null, default: 'PENDING']
+  ReceivedAt datetime
+  ReceivedBy varchar(50)
+  ReturnedAt datetime
+  ReturnedBy varchar(50)
+  Notes text
+  TotalAmount decimal(15,2) [not null]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table DepositDetail {
+  DepositDetailID varchar(50) [pk]
+  DepositID varchar(50) [not null]
+  ItemType varchar(50) [not null]
+  ItemName varchar(255) [not null]
+  ItemValue decimal(15,2) [not null]
+  ItemCondition varchar(50) [not null]
+  PhotoURLs text
+  IdentifierNumber varchar(100)
+  Brand varchar(100)
+  Model varchar(100)
+  Color varchar(50)
+  Year int
+  ExpiryDate datetime
+  Notes text
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table Handover {
+  HandoverID varchar(50) [pk]
+  BookingID varchar(50) [not null]
+  HandoverMileage int [not null]
+  FuelLevel decimal(5,2) [not null]
+  PickupPlace varchar(500) [not null]
+  Condition varchar(50) [not null]
+  DamageNote text
+  PhotoURLs text
+  Accessories text
+  CustomerSignature text [not null]
+  HandoverBy varchar(50) [not null]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table ReturnReport {
+  ReturnReportID varchar(50) [pk]
+  BookingID varchar(50) [not null]
+  FuelLevel decimal(5,2) [not null]
+  DamageNote text
+  ReturnMileage int [not null]
+  ReturnBranchID varchar(50) [not null]
+  Condition varchar(50) [not null]
+  CheckedBy varchar(50) [not null]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table Invoice {
+  InvoiceID varchar(50) [pk]
+  BookingID varchar(50) [not null]
+  TotalAmount decimal(15,2) [not null]
+  Status varchar(20) [not null, default: 'DRAFT']
+  DueDate datetime [not null]
+  PaidAt datetime
+  Notes text
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table Payment {
+  PaymentID varchar(50) [pk]
+  InvoiceID varchar(50) [not null]
+  PaymentMethod varchar(50) [not null]
+  TransactionID varchar(100) [unique]
+  Status varchar(20) [not null, default: 'PENDING']
+  Amount decimal(15,2) [not null]
+  Method varchar(50) [not null]
+  PaidAt datetime [not null]
+}
+
+Table Surcharge {
+  SurchargeID varchar(50) [pk]
+  InvoiceID varchar(50) [not null]
+  Description text [not null]
+  Amount decimal(15,2) [not null]
+  Type varchar(50) [not null]
+  EvidenceURL text
+  OccurredAt datetime [not null]
+  CreatedBy varchar(50) [not null]
+  Status varchar(20) [not null, default: 'PENDING']
+}
+
+Table Promotion {
+  PromotionID varchar(50) [pk]
+  Code varchar(50) [unique, not null]
+  Discount decimal(15,2) [not null]
+  Status varchar(20) [not null, default: 'ACTIVE']
+  ExpiredAt datetime [not null]
+}
+
+Table Maintenance {
+  MaintenanceID varchar(50) [pk]
+  VehicleID varchar(50) [not null]
+  Description text [not null]
+  PerformedBy varchar(255) [not null]
+  Cost decimal(15,2) [not null]
+  Status varchar(20) [not null, default: 'PENDING']
+  NextMaintenanceAt datetime
+  MaintenanceAt datetime [not null]
+}
+
+Table AuditLog {
+  AuditLogID varchar(50) [pk]
+  AccountID varchar(50) [not null]
+  Action varchar(500) [not null]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ========================================
+// LEVEL 1: SEO & CONTENT (5 TABLES)
+// ========================================
+
+Table BlogPost {
+  PostID varchar(50) [pk]
+  Title varchar(255) [not null]
+  Slug varchar(255) [unique, not null]
+  Content text [not null]
+  Excerpt varchar(500)
+  FeaturedImage varchar(500)
+  MetaTitle varchar(60)
+  MetaDescription varchar(160)
+  MetaKeywords varchar(255)
+  CategoryID varchar(50) [not null]
+  AuthorID varchar(50) [not null]
+  ViewCount int [default: 0]
+  Status varchar(20) [default: 'DRAFT']
+  PublishedAt datetime
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+  UpdatedAt datetime
+}
+
+Table BlogCategory {
+  CategoryID varchar(50) [pk]
+  CategoryName varchar(100) [unique, not null]
+  Slug varchar(255) [unique, not null]
+  Description text
+  ParentID varchar(50)
+  MetaTitle varchar(60)
+  MetaDescription varchar(160)
+  DisplayOrder int [default: 0]
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table Page {
+  PageID varchar(50) [pk]
+  Title varchar(255) [not null]
+  Slug varchar(255) [unique, not null]
+  Content text [not null]
+  MetaTitle varchar(60)
+  MetaDescription varchar(160)
+  Template varchar(50)
+  Status varchar(20) [default: 'PUBLISHED']
+  DisplayOrder int [default: 0]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+  UpdatedAt datetime
+}
+
+Table Review {
+  ReviewID varchar(50) [pk]
+  BookingID varchar(50) [not null]
+  CustomerID varchar(50) [not null]
+  VehicleID varchar(50)
+  Rating int [not null, note: '1-5 stars']
+  Title varchar(255)
+  Content text
+  Images text
+  IsVerified boolean [default: false]
+  IsApproved boolean [default: false]
+  HelpfulCount int [default: 0]
+  ResponseText text
+  ResponseBy varchar(50)
+  ResponseAt datetime
+  Status varchar(20) [default: 'PENDING']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table SeoRedirect {
+  RedirectID varchar(50) [pk]
+  OldURL varchar(500) [not null]
+  NewURL varchar(500) [not null]
+  RedirectType varchar(10) [default: '301']
+  Hits int [default: 0]
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ========================================
+// LEVEL 2: MARKETING & CRM (6 TABLES)
+// ========================================
+
+Table Notification {
+  NotificationID varchar(50) [pk]
+  AccountID varchar(50)
+  Type varchar(50) [not null]
+  Title varchar(255) [not null]
+  Message text [not null]
+  Link varchar(500)
+  IsRead boolean [default: false]
+  ReadAt datetime
+  Priority varchar(20) [default: 'NORMAL']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table NotificationTemplate {
+  TemplateID varchar(50) [pk]
+  TemplateName varchar(100) [not null]
+  Type varchar(20) [not null, note: 'EMAIL, SMS, PUSH']
+  Subject varchar(255)
+  Body text [not null]
+  Variables text [note: 'JSON']
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table CustomerSegment {
+  SegmentID varchar(50) [pk]
+  SegmentName varchar(100) [not null]
+  Description text
+  Conditions text [not null, note: 'JSON rules']
+  CustomerCount int [default: 0]
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table MarketingCampaign {
+  CampaignID varchar(50) [pk]
+  CampaignName varchar(255) [not null]
+  Description text
+  Type varchar(50) [not null]
+  SegmentID varchar(50)
+  TemplateID varchar(50)
+  StartDate datetime [not null]
+  EndDate datetime [not null]
+  Budget decimal(15,2)
+  SentCount int [default: 0]
+  OpenCount int [default: 0]
+  ClickCount int [default: 0]
+  ConversionCount int [default: 0]
+  Status varchar(20) [default: 'DRAFT']
+  CreatedBy varchar(50) [not null]
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table LoyaltyProgram {
+  ProgramID varchar(50) [pk]
+  ProgramName varchar(100) [not null]
+  Description text
+  PointsPerAmount decimal(10,2) [not null]
+  RedemptionRate decimal(10,2) [not null]
+  MinimumPoints int [not null]
+  Status varchar(20) [default: 'ACTIVE']
+  StartDate datetime [not null]
+  EndDate datetime
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table LoyaltyTransaction {
+  TransactionID varchar(50) [pk]
+  CustomerID varchar(50) [not null]
+  BookingID varchar(50)
+  Type varchar(20) [not null, note: 'EARN, REDEEM, EXPIRE, ADJUST']
+  Points int [not null]
+  BalanceBefore int [not null]
+  BalanceAfter int [not null]
+  Description varchar(500)
+  ExpiryDate datetime
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// ========================================
+// LEVEL 3: ENTERPRISE (6 TABLES)
+// ========================================
+
+Table Tenant {
+  TenantID varchar(50) [pk]
+  CompanyName varchar(255) [not null]
+  Subdomain varchar(100) [unique]
+  CustomDomain varchar(255) [unique]
+  LogoURL varchar(500)
+  PrimaryColor varchar(10)
+  SecondaryColor varchar(10)
+  ContactEmail varchar(255) [not null]
+  ContactPhone varchar(20) [not null]
+  SubscriptionPlanID varchar(50) [not null]
+  SubscriptionStatus varchar(20) [default: 'TRIAL']
+  TrialEndsAt datetime
+  SubscriptionEndsAt datetime
+  MaxVehicles int [not null]
+  MaxBranches int [not null]
+  MaxEmployees int [not null]
+  FeaturesEnabled text [note: 'JSON array']
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table SubscriptionPlan {
+  PlanID varchar(50) [pk]
+  PlanName varchar(100) [not null]
+  Description text
+  MonthlyPrice decimal(15,2) [not null]
+  YearlyPrice decimal(15,2) [not null]
+  MaxVehicles int [not null]
+  MaxBranches int [not null]
+  MaxEmployees int [not null]
+  Features text [note: 'JSON array']
+  DisplayOrder int [default: 0]
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table PricingRule {
+  RuleID varchar(50) [pk]
+  RuleName varchar(255) [not null]
+  CategoryID varchar(50)
+  VehicleID varchar(50)
+  Type varchar(50) [not null]
+  Multiplier decimal(5,2)
+  FixedAmount decimal(15,2)
+  StartDate datetime
+  EndDate datetime
+  DaysOfWeek varchar(50)
+  Priority int [default: 0]
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table CorporateAccount {
+  CorporateID varchar(50) [pk]
+  CompanyName varchar(255) [not null]
+  TaxCode varchar(50) [unique, not null]
+  ContactName varchar(255) [not null]
+  Email varchar(255) [unique, not null]
+  Phone varchar(20) [not null]
+  Address text [not null]
+  CreditLimit decimal(15,2) [not null]
+  CurrentBalance decimal(15,2) [default: 0]
+  PaymentTerms varchar(50) [not null]
+  DiscountRate decimal(5,2)
+  ContractFileURL varchar(500)
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table Partner {
+  PartnerID varchar(50) [pk]
+  PartnerName varchar(255) [not null]
+  PartnerType varchar(50) [not null]
+  ContactName varchar(255) [not null]
+  Email varchar(255) [unique, not null]
+  Phone varchar(20) [not null]
+  CommissionRate decimal(5,2) [not null]
+  TotalBookings int [default: 0]
+  TotalRevenue decimal(15,2) [default: 0]
+  TotalCommission decimal(15,2) [default: 0]
+  BankAccount varchar(100)
+  BankName varchar(255)
+  Status varchar(20) [default: 'ACTIVE']
+  CreatedAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table SystemConfig {
+  ConfigID varchar(50) [pk]
+  ConfigKey varchar(100) [unique, not null]
+  ConfigValue text [not null]
+  DataType varchar(20) [not null]
+  Description text
+  IsPublic boolean [default: false]
+  UpdatedBy varchar(50)
+  UpdatedAt datetime
+}
+
+// ========================================
+// RELATIONSHIPS
+// ========================================
+
+// Core Business Relationships
+Ref: Vehicle.BranchID > Branch.BranchID
+Ref: Vehicle.PriceListID > PriceList.PriceListID
+Ref: VehicleDocument.VehicleID > Vehicle.VehicleID
+Ref: Maintenance.VehicleID > Vehicle.VehicleID
+Ref: Branch.ManagerID > Employee.EmployeeID
+Ref: Employee.BranchID > Branch.BranchID
+Ref: Employee.AccountID > Account.AccountID
+Ref: Customer.AccountID > Account.AccountID
+
+Ref: Booking.CustomerID > Customer.CustomerID
+Ref: Booking.BranchID > Branch.BranchID
+Ref: Booking.VehicleID > Vehicle.VehicleID
+Ref: Booking.PickupBranchID > Branch.BranchID
+Ref: Booking.ReturnBranchID > Branch.BranchID
+
+Ref: Contract.BookingID > Booking.BookingID
+Ref: Contract.SignedBy > Employee.EmployeeID
+
+Ref: Deposit.BookingID > Booking.BookingID
+Ref: Deposit.ReceivedBy > Employee.EmployeeID
+Ref: Deposit.ReturnedBy > Employee.EmployeeID
+Ref: DepositDetail.DepositID > Deposit.DepositID
+
+Ref: Handover.BookingID > Booking.BookingID
+Ref: Handover.HandoverBy > Employee.EmployeeID
+
+Ref: ReturnReport.BookingID > Booking.BookingID
+Ref: ReturnReport.ReturnBranchID > Branch.BranchID
+Ref: ReturnReport.CheckedBy > Employee.EmployeeID
+
+Ref: Invoice.BookingID > Booking.BookingID
+Ref: Payment.InvoiceID > Invoice.InvoiceID
+Ref: Surcharge.InvoiceID > Invoice.InvoiceID
+Ref: Surcharge.CreatedBy > Employee.EmployeeID
+
+Ref: AuditLog.AccountID > Account.AccountID
+
+// SEO & Content Relationships
+Ref: BlogPost.CategoryID > BlogCategory.CategoryID
+Ref: BlogPost.AuthorID > Employee.EmployeeID
+Ref: BlogCategory.ParentID > BlogCategory.CategoryID
+
+Ref: Review.BookingID > Booking.BookingID
+Ref: Review.CustomerID > Customer.CustomerID
+Ref: Review.VehicleID > Vehicle.VehicleID
+Ref: Review.ResponseBy > Employee.EmployeeID
+
+// Marketing & CRM Relationships
+Ref: Notification.AccountID > Account.AccountID
+
+Ref: MarketingCampaign.SegmentID > CustomerSegment.SegmentID
+Ref: MarketingCampaign.TemplateID > NotificationTemplate.TemplateID
+Ref: MarketingCampaign.CreatedBy > Employee.EmployeeID
+
+Ref: LoyaltyTransaction.CustomerID > Customer.CustomerID
+Ref: LoyaltyTransaction.BookingID > Booking.BookingID
+
+// Enterprise Relationships
+Ref: Tenant.SubscriptionPlanID > SubscriptionPlan.PlanID
+
+Ref: PricingRule.CategoryID > VehicleCategory.CategoryID
+Ref: PricingRule.VehicleID > Vehicle.VehicleID
+
+Ref: SystemConfig.UpdatedBy > Employee.EmployeeID
