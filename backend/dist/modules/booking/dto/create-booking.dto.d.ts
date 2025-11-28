@@ -2,7 +2,10 @@ export declare class CreateBookingDto {
     customerId: string;
     vehicleId: string;
     branchId: string;
+    returnBranchId?: string;
     pickupDate: string;
     returnDate: string;
-    baseAmount: number;
+    discountAmount?: number;
+    promotionId?: string;
+    note?: string;
 }

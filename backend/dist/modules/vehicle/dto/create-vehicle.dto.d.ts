@@ -1,16 +1,21 @@
 export declare class CreateVehicleDto {
     name: string;
+    vehicleType?: string;
     licensePlate: string;
     brand?: string;
     model?: string;
     year?: number;
     color?: string;
-    mileage?: number;
     seatCount?: number;
     transmission?: string;
     fuelType?: string;
+    mileage?: number;
     status?: string;
-    photos: string[];
+    slug?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    seoDescription?: string;
+    photos?: string[];
     categoryId: string;
     branchId: string;
     priceListId?: string;

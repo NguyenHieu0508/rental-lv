@@ -16,11 +16,11 @@ export default function Header() {
             : [];
 
     const handleLogout = () => {
-        logout();
+        logout(); // Logout sẽ trigger re-render ngay
         toast.success("Logged out");
         router.push("/auth");
+        router.refresh(); // Force refresh để chắc chắn
     };
-
     return (
         <header className="relative w-full px-6 py-4">
             {/* BG Blur */}

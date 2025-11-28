@@ -1,19 +1,20 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { PriceListService } from './price-list.service';
+import { PriceListQueryDto } from './dto/price-list-query.dto';
 import { CreatePriceListDto } from './dto/create-pricelist.dto';
 import { UpdatePriceListDto } from './dto/update-pricelist.dto';
-import { PriceListService } from './price-list.service';
 
 @Controller('price-lists')
 export class PriceListController {
-    constructor(private readonly service: PriceListService) { }
+    constructor(private service: PriceListService) { }
 
     @Get()
-    findAll(@Query('keyword') keyword?: string) {
-        return this.service.findAll(keyword);
+    list(@Query() query: PriceListQueryDto) {
+        return this.service.findAll(query);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
+    detail(@Param('id') id: string) {
         return this.service.findOne(id);
     }
 
@@ -22,13 +23,18 @@ export class PriceListController {
         return this.service.create(dto);
     }
 
-    @Patch(':id')
+    @Put(':id')
     update(@Param('id') id: string, @Body() dto: UpdatePriceListDto) {
         return this.service.update(id, dto);
     }
 
+    @Patch(':id/deactivate')
+    deactivate(@Param('id') id: string) {
+        return this.service.deactivate(id);
+    }
+
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.service.remove(id);
+    delete(@Param('id') id: string) {
+        return this.service.delete(id);
     }
 }

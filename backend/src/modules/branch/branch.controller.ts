@@ -1,42 +1,40 @@
-import {
-    Body, Controller, Delete, Get,
-    Param, Patch, Post, UseGuards
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { BranchService } from './branch.service';
+import { BranchQueryDto } from './dto/branch-query.dto';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@ApiTags('branches')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('branches')
 export class BranchController {
-    constructor(private readonly branchService: BranchService) { }
+    constructor(private service: BranchService) { }
 
     @Get()
-    findAll() {
-        return this.branchService.findAll();
+    list(@Query() query: BranchQueryDto) {
+        return this.service.findAll(query);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.branchService.findOne(id);
+    detail(@Param('id') id: string) {
+        return this.service.findOne(id);
     }
 
     @Post()
     create(@Body() dto: CreateBranchDto) {
-        return this.branchService.create(dto);
+        return this.service.create(dto);
     }
 
-    @Patch(':id')
+    @Put(':id')
     update(@Param('id') id: string, @Body() dto: UpdateBranchDto) {
-        return this.branchService.update(id, dto);
+        return this.service.update(id, dto);
+    }
+
+    @Patch(':id/deactivate')
+    deactivate(@Param('id') id: string) {
+        return this.service.deactivate(id);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.branchService.remove(id);
+    delete(@Param('id') id: string) {
+        return this.service.delete(id);
     }
 }

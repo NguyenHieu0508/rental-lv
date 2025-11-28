@@ -3,7 +3,6 @@
 import {
     createContext,
     useContext,
-    useEffect,
     useCallback
 } from "react";
 import { authService } from "@/services/auth.service";
@@ -52,7 +51,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const logout = useCallback(() => {
+        // 1. Clear token trước
         authService.logout();
+
+        // 2. Set query data về null (trigger re-render ngay lập tức)
+        queryClient.setQueryData(["auth", "profile"], null);
+
+        // 3. Invalidate để đảm bảo query không còn cache
+        queryClient.invalidateQueries({
+            queryKey: ["auth", "profile"]
+        });
+
+        // 4. Clear toàn bộ cache (optional - nếu muốn clear hết data)
         queryClient.clear();
     }, [queryClient]);
 

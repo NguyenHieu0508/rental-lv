@@ -1,46 +1,208 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '@/prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { randomUUID } from 'crypto';
+import { UpdateBookingDto } from './dto/update-booking.dto';
+import { BookingQueryDto } from './dto/booking-query.dto';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class BookingService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private audit: AuditLogService
+    ) { }
 
-    findAll() {
-        return this.prisma.booking.findMany();
+    // ============= GENERATE BOOKING CODE =============
+    generateBookingCode() {
+        return 'BKG-' + randomBytes(4).toString('hex').toUpperCase();
     }
 
+    // ============= CHECK VEHICLE AVAILABLE =============
+    async checkVehicleAvailable(vehicleId: string, pickup: Date, rt: Date) {
+        const overlapping = await this.prisma.booking.findFirst({
+            where: {
+                vehicleId,
+                status: { in: ['PENDING', 'CONFIRMED', 'ONGOING'] },
+                OR: [
+                    {
+                        pickupDate: { lte: rt },
+                        returnDate: { gte: pickup }
+                    }
+                ]
+            }
+        });
+
+        return !overlapping;
+    }
+
+    // ============= AUTO CALCULATE PRICE =============
+    async calcPrice(vehicleId: string, pickup: Date, rt: Date) {
+        const vehicle = await this.prisma.vehicle.findUnique({
+            where: { id: vehicleId },
+            include: { priceList: true }
+        });
+
+        if (!vehicle) throw new NotFoundException('Vehicle not found');
+        if (!vehicle.priceList) throw new BadRequestException('Vehicle has no price list');
+
+        const ms = rt.getTime() - pickup.getTime();
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+
+        const base = days * vehicle.priceList.dailyRate;
+
+        return base;
+    }
+
+    // ============= LIST =============
+    async findAll(query: BookingQueryDto) {
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 20;
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+
+        if (query.search) {
+            where.bookingCode = { contains: query.search, mode: 'insensitive' };
+        }
+
+        if (query.status) where.status = query.status;
+        if (query.branchId) where.branchId = query.branchId;
+        if (query.customerId) where.customerId = query.customerId;
+        if (query.vehicleId) where.vehicleId = query.vehicleId;
+
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.booking.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    customer: true,
+                    vehicle: true,
+                    branch: true,
+                    returnBranch: true
+                }
+            }),
+            this.prisma.booking.count({ where })
+        ]);
+
+        return {
+            items,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
+    }
+
+    // ============= DETAIL =============
     async findOne(id: string) {
-        const data = await this.prisma.booking.findUnique({ where: { id } });
-        if (!data) throw new NotFoundException('Booking not found');
-        return data;
+        const b = await this.prisma.booking.findUnique({
+            where: { id },
+            include: {
+                customer: true,
+                vehicle: true,
+                branch: true,
+                returnBranch: true,
+                contract: true,
+                deposit: true,
+                handover: true,
+                returnReport: true,
+                invoice: true
+            }
+        });
+
+        if (!b) throw new NotFoundException('Booking not found');
+        return b;
     }
 
-    async create(dto: CreateBookingDto) {
-        const bookingCode = 'BK-' + randomUUID().slice(0, 8).toUpperCase();
+    // ============= CREATE BOOKING =============
+    async create(dto: CreateBookingDto, actorId?: string) {
+        const pickup = new Date(dto.pickupDate);
+        const rt = new Date(dto.returnDate);
 
-        return this.prisma.booking.create({
+        if (pickup >= rt) throw new BadRequestException('Invalid pickup/return date');
+
+        const available = await this.checkVehicleAvailable(dto.vehicleId, pickup, rt);
+        if (!available) throw new BadRequestException('Vehicle not available for selected dates');
+
+        const baseAmount = await this.calcPrice(dto.vehicleId, pickup, rt);
+        const discount = dto.discountAmount ?? 0;
+        const total = baseAmount - discount;
+
+        const booking = await this.prisma.booking.create({
             data: {
-                bookingCode,
+                bookingCode: this.generateBookingCode(),
                 customerId: dto.customerId,
                 vehicleId: dto.vehicleId,
                 branchId: dto.branchId,
-                pickupDate: new Date(dto.pickupDate),
-                returnDate: new Date(dto.returnDate),
-                status: 'PENDING',
-                baseAmount: dto.baseAmount,
-                discountAmount: 0,
-                totalAmount: dto.baseAmount,
+                returnBranchId: dto.returnBranchId,
+                pickupDate: pickup,
+                returnDate: rt,
+                baseAmount,
+                discountAmount: discount,
+                totalAmount: total,
+                promotionId: dto.promotionId,
+                note: dto.note,
+                status: 'PENDING'
             }
         });
+
+        await this.audit.log(actorId ?? null, 'CREATE', 'Booking', booking.id, booking);
+
+        return booking;
     }
 
-    async updateStatus(id: string, status: string) {
-        await this.findOne(id);
-        return this.prisma.booking.update({
+    // ============= UPDATE BOOKING =============
+    async update(id: string, dto: UpdateBookingDto, actorId?: string) {
+        const before = await this.findOne(id);
+
+        const pickup = dto.pickupDate ? new Date(dto.pickupDate) : before.pickupDate;
+        const rt = dto.returnDate ? new Date(dto.returnDate) : before.returnDate;
+
+        if (pickup >= rt) throw new BadRequestException('Invalid pickup/return date');
+
+        const updated = await this.prisma.booking.update({
+            where: { id },
+            data: dto
+        });
+
+        await this.audit.log(actorId ?? null, 'UPDATE', 'Booking', id, {
+            before,
+            after: updated
+        });
+
+        return updated;
+    }
+
+    // ============= CHANGE STATUS =============
+    async changeStatus(id: string, status: string, actorId?: string) {
+        const updated = await this.prisma.booking.update({
             where: { id },
             data: { status }
         });
+
+        await this.audit.log(actorId ?? null, 'STATUS', 'Booking', id, { status });
+
+        return updated;
+    }
+
+    // ============= CANCEL =============
+    async cancel(id: string, reason: string, actorId?: string) {
+        const updated = await this.prisma.booking.update({
+            where: { id },
+            data: { status: 'CANCELLED', cancelReason: reason }
+        });
+
+        await this.audit.log(actorId ?? null, 'CANCEL', 'Booking', id, { reason });
+
+        return updated;
+    }
+
+    // ============= DELETE =============
+    async delete(id: string, actorId?: string) {
+        await this.audit.log(actorId ?? null, 'DELETE', 'Booking', id);
+        return this.prisma.booking.delete({ where: { id } });
     }
 }

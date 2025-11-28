@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
+import { PrismaService } from '@/prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { BranchService } from './branch.service';
 import { BranchController } from './branch.controller';
 
 @Module({
     controllers: [BranchController],
-    providers: [BranchService],
+    providers: [BranchService, PrismaService, AuditLogService],
+    exports: [BranchService]
 })
 export class BranchModule { }

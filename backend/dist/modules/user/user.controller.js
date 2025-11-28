@@ -14,55 +14,60 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const common_1 = require("@nestjs/common");
-const swagger_1 = require("@nestjs/swagger");
 const user_service_1 = require("./user.service");
-const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const user_query_dto_1 = require("./dto/user-query.dto");
 const create_user_dto_1 = require("./dto/create-user.dto");
 const update_user_dto_1 = require("./dto/update-user.dto");
+const change_password_dto_1 = require("./dto/change-password.dto");
+const reset_password_dto_1 = require("./dto/reset-password.dto");
+const update_role_dto_1 = require("./dto/update-role.dto");
 let UserController = class UserController {
-    constructor(userService) {
-        this.userService = userService;
+    constructor(service) {
+        this.service = service;
     }
-    me(req) {
-        return this.userService.findOne(req.user.userId);
+    getAll(query) {
+        return this.service.findAll(query);
     }
-    findAll() {
-        return this.userService.findAll();
-    }
-    findOne(id) {
-        return this.userService.findOne(id);
+    getOne(id) {
+        return this.service.findOne(id);
     }
     create(dto) {
-        return this.userService.create(dto);
+        return this.service.create(dto);
     }
     update(id, dto) {
-        return this.userService.update(id, dto);
+        return this.service.update(id, dto);
     }
-    remove(id) {
-        return this.userService.remove(id);
+    changePassword(id, dto) {
+        return this.service.changePassword(id, dto, id);
+    }
+    resetPassword(id, dto) {
+        return this.service.resetPassword(id, dto, 'admin');
+    }
+    updateRole(id, dto) {
+        return this.service.updateRole(id, dto, 'admin');
+    }
+    disable(id) {
+        return this.service.softDelete(id, 'system');
+    }
+    hardDelete(id) {
+        return this.service.hardDelete(id, 'system');
     }
 };
 exports.UserController = UserController;
 __decorate([
-    (0, common_1.Get)('me'),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], UserController.prototype, "me", null);
-__decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [user_query_dto_1.UserQueryDto]),
     __metadata("design:returntype", void 0)
-], UserController.prototype, "findAll", null);
+], UserController.prototype, "getAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], UserController.prototype, "findOne", null);
+], UserController.prototype, "getOne", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -71,7 +76,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UserController.prototype, "create", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -79,16 +84,44 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UserController.prototype, "update", null);
 __decorate([
+    (0, common_1.Patch)(':id/change-password'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, change_password_dto_1.ChangePasswordDto]),
+    __metadata("design:returntype", void 0)
+], UserController.prototype, "changePassword", null);
+__decorate([
+    (0, common_1.Patch)(':id/reset-password'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, reset_password_dto_1.ResetPasswordDto]),
+    __metadata("design:returntype", void 0)
+], UserController.prototype, "resetPassword", null);
+__decorate([
+    (0, common_1.Patch)(':id/role'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_role_dto_1.UpdateRoleDto]),
+    __metadata("design:returntype", void 0)
+], UserController.prototype, "updateRole", null);
+__decorate([
+    (0, common_1.Patch)(':id/disable'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], UserController.prototype, "disable", null);
+__decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], UserController.prototype, "remove", null);
+], UserController.prototype, "hardDelete", null);
 exports.UserController = UserController = __decorate([
-    (0, swagger_1.ApiTags)('users'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('users'),
     __metadata("design:paramtypes", [user_service_1.UserService])
 ], UserController);

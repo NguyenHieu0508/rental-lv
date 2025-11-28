@@ -13,6 +13,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { VehicleCategoryModule } from './modules/vehicle-category/vehicle-category.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { PriceListModule } from './modules/price-list/price-list.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -26,6 +27,8 @@ import { PriceListModule } from './modules/price-list/price-list.module';
     BillingModule,
     VehicleCategoryModule,
     CloudinaryModule,
+    AuditLogModule,
+
     PriceListModule
   ],
 })

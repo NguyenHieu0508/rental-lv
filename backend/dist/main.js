@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const swagger_1 = require("@nestjs/swagger");
+const audit_interceptor_1 = require("./interceptors/audit.interceptor");
+const audit_log_service_1 = require("./modules/audit-log/audit-log.service");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
@@ -12,6 +14,8 @@ async function bootstrap() {
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
     app.setGlobalPrefix('api');
+    const auditService = app.get(audit_log_service_1.AuditLogService);
+    app.useGlobalInterceptors(new audit_interceptor_1.AuditInterceptor(auditService));
     const config = new swagger_1.DocumentBuilder()
         .setTitle('Rental API')
         .setDescription('Car Rental Backend API (NestJS 11 + Prisma + MongoDB)')

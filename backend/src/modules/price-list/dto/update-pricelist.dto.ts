@@ -1,4 +1,30 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreatePriceListDto } from './create-pricelist.dto';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class UpdatePriceListDto extends PartialType(CreatePriceListDto) { }
+export class UpdatePriceListDto {
+    @IsOptional()
+    @IsString()
+    name?: string;
+
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsOptional()
+    @IsString()
+    currency?: string;
+
+    @IsOptional()
+    @IsNumber()
+    dailyRate?: number;
+
+    @IsOptional()
+    @IsNumber()
+    hourlyRate?: number;
+
+    @IsOptional()
+    @IsNumber()
+    weekendRate?: number;
+
+    @IsOptional()
+    isActive?: boolean;
+}

@@ -1,5 +1,9 @@
-import { CreatePriceListDto } from './create-pricelist.dto';
-declare const UpdatePriceListDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreatePriceListDto>>;
-export declare class UpdatePriceListDto extends UpdatePriceListDto_base {
+export declare class UpdatePriceListDto {
+    name?: string;
+    description?: string;
+    currency?: string;
+    dailyRate?: number;
+    hourlyRate?: number;
+    weekendRate?: number;
+    isActive?: boolean;
 }
-export {};

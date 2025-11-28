@@ -1,21 +1,39 @@
-import { IsDateString, IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsOptional, IsString, IsNumber } from 'class-validator';
 
 export class CreateBookingDto {
+    @IsNotEmpty()
     @IsString()
     customerId!: string;
 
+    @IsNotEmpty()
     @IsString()
     vehicleId!: string;
 
+    @IsNotEmpty()
     @IsString()
     branchId!: string;
 
+    @IsOptional()
+    @IsString()
+    returnBranchId?: string;
+
+    @IsNotEmpty()
     @IsDateString()
     pickupDate!: string;
 
+    @IsNotEmpty()
     @IsDateString()
     returnDate!: string;
 
+    @IsOptional()
     @IsNumber()
-    baseAmount!: number;
+    discountAmount?: number;
+
+    @IsOptional()
+    @IsString()
+    promotionId?: string;
+
+    @IsOptional()
+    @IsString()
+    note?: string;
 }

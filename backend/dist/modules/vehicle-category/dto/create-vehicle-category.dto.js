@@ -30,7 +30,32 @@ __decorate([
 ], CreateVehicleCategoryDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsBoolean)(),
-    __metadata("design:type", Boolean)
-], CreateVehicleCategoryDto.prototype, "isActive", void 0);
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateVehicleCategoryDto.prototype, "imageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateVehicleCategoryDto.prototype, "metaTitle", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateVehicleCategoryDto.prototype, "metaDescription", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateVehicleCategoryDto.prototype, "seoTitle", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateVehicleCategoryDto.prototype, "hTitle", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateVehicleCategoryDto.prototype, "displayOrder", void 0);
 //# sourceMappingURL=create-vehicle-category.dto.js.map

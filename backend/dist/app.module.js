@@ -19,6 +19,7 @@ const billing_module_1 = require("./modules/billing/billing.module");
 const vehicle_category_module_1 = require("./modules/vehicle-category/vehicle-category.module");
 const cloudinary_module_1 = require("./cloudinary/cloudinary.module");
 const price_list_module_1 = require("./modules/price-list/price-list.module");
+const audit_log_module_1 = require("./modules/audit-log/audit-log.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -35,6 +36,7 @@ exports.AppModule = AppModule = __decorate([
             billing_module_1.BillingModule,
             vehicle_category_module_1.VehicleCategoryModule,
             cloudinary_module_1.CloudinaryModule,
+            audit_log_module_1.AuditLogModule,
             price_list_module_1.PriceListModule
         ],
     })

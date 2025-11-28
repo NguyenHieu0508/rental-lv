@@ -1,78 +1,112 @@
 import { VehicleCategoryService } from './vehicle-category.service';
+import { VehicleCategoryQueryDto } from './dto/vehicle-category-query.dto';
 import { CreateVehicleCategoryDto } from './dto/create-vehicle-category.dto';
 import { UpdateVehicleCategoryDto } from './dto/update-vehicle-category.dto';
 export declare class VehicleCategoryController {
     private service;
     constructor(service: VehicleCategoryService);
-    findAll(keyword?: string): import(".prisma/client").Prisma.PrismaPromise<{
+    list(query: VehicleCategoryQueryDto): Promise<{
+        items: {
+            id: string;
+            name: string;
+            code: string | null;
+            slug: string | null;
+            description: string | null;
+            imageUrl: string | null;
+            metaTitle: string | null;
+            metaDescription: string | null;
+            displayOrder: number | null;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
+    detail(id: string): Promise<{
+        vehicles: {
+            id: string;
+            name: string;
+            vehicleType: string | null;
+            licensePlate: string;
+            brand: string | null;
+            model: string | null;
+            year: number | null;
+            color: string | null;
+            seatCount: number | null;
+            transmission: string | null;
+            fuelType: string | null;
+            mileage: number | null;
+            status: string;
+            slug: string | null;
+            metaTitle: string | null;
+            metaDescription: string | null;
+            seoDescription: string | null;
+            rating: number | null;
+            reviewCount: number | null;
+            photos: string[];
+            priceListId: string | null;
+            overridePriceEnabled: boolean;
+            overrideDailyRate: number | null;
+            overrideHourlyRate: number | null;
+            overrideWeekendRate: number | null;
+            overrideHolidayRate: number | null;
+            categoryId: string;
+            branchId: string;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
+    } & {
         id: string;
         name: string;
         code: string | null;
+        slug: string | null;
         description: string | null;
         imageUrl: string | null;
         metaTitle: string | null;
         metaDescription: string | null;
-        seoTitle: string | null;
-        hTitle: string | null;
         displayOrder: number | null;
         createdAt: Date;
         updatedAt: Date;
-    }[]>;
-    findOne(id: string): import(".prisma/client").Prisma.Prisma__VehicleCategoryClient<{
+    }>;
+    create(dto: CreateVehicleCategoryDto): Promise<{
         id: string;
         name: string;
         code: string | null;
+        slug: string | null;
         description: string | null;
         imageUrl: string | null;
         metaTitle: string | null;
         metaDescription: string | null;
-        seoTitle: string | null;
-        hTitle: string | null;
         displayOrder: number | null;
         createdAt: Date;
         updatedAt: Date;
-    } | null, null, import("@prisma/client/runtime/library").DefaultArgs>;
-    create(dto: CreateVehicleCategoryDto): import(".prisma/client").Prisma.Prisma__VehicleCategoryClient<{
+    }>;
+    update(id: string, dto: UpdateVehicleCategoryDto): Promise<{
         id: string;
         name: string;
         code: string | null;
+        slug: string | null;
         description: string | null;
         imageUrl: string | null;
         metaTitle: string | null;
         metaDescription: string | null;
-        seoTitle: string | null;
-        hTitle: string | null;
         displayOrder: number | null;
         createdAt: Date;
         updatedAt: Date;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
-    update(id: string, dto: UpdateVehicleCategoryDto): import(".prisma/client").Prisma.Prisma__VehicleCategoryClient<{
+    }>;
+    delete(id: string): Promise<{
         id: string;
         name: string;
         code: string | null;
+        slug: string | null;
         description: string | null;
         imageUrl: string | null;
         metaTitle: string | null;
         metaDescription: string | null;
-        seoTitle: string | null;
-        hTitle: string | null;
         displayOrder: number | null;
         createdAt: Date;
         updatedAt: Date;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
-    delete(id: string): import(".prisma/client").Prisma.Prisma__VehicleCategoryClient<{
-        id: string;
-        name: string;
-        code: string | null;
-        description: string | null;
-        imageUrl: string | null;
-        metaTitle: string | null;
-        metaDescription: string | null;
-        seoTitle: string | null;
-        hTitle: string | null;
-        displayOrder: number | null;
-        createdAt: Date;
-        updatedAt: Date;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
-    private validateId;
+    }>;
 }

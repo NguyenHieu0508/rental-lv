@@ -1,15 +1,6 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Param,
-    Patch,
-    Delete,
-    Query,
-    BadRequestException
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { VehicleCategoryService } from './vehicle-category.service';
+import { VehicleCategoryQueryDto } from './dto/vehicle-category-query.dto';
 import { CreateVehicleCategoryDto } from './dto/create-vehicle-category.dto';
 import { UpdateVehicleCategoryDto } from './dto/update-vehicle-category.dto';
 
@@ -17,46 +8,28 @@ import { UpdateVehicleCategoryDto } from './dto/update-vehicle-category.dto';
 export class VehicleCategoryController {
     constructor(private service: VehicleCategoryService) { }
 
-    // GET ALL + SEARCH
     @Get()
-    findAll(@Query('keyword') keyword?: string) {
-        return this.service.findAll(keyword);
+    list(@Query() query: VehicleCategoryQueryDto) {
+        return this.service.findAll(query);
     }
 
-    // GET ONE
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        this.validateId(id);
+    detail(@Param('id') id: string) {
         return this.service.findOne(id);
     }
 
-    // CREATE
     @Post()
     create(@Body() dto: CreateVehicleCategoryDto) {
         return this.service.create(dto);
     }
 
-    // UPDATE
-    @Patch(':id')
-    update(
-        @Param('id') id: string,
-        @Body() dto: UpdateVehicleCategoryDto
-    ) {
-        this.validateId(id);
+    @Put(':id')
+    update(@Param('id') id: string, @Body() dto: UpdateVehicleCategoryDto) {
         return this.service.update(id, dto);
     }
 
-    // DELETE
     @Delete(':id')
     delete(@Param('id') id: string) {
-        this.validateId(id);
         return this.service.delete(id);
-    }
-
-    // Helper: validate MongoDB ObjectId
-    private validateId(id: string) {
-        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-            throw new BadRequestException('Invalid ID format');
-        }
     }
 }

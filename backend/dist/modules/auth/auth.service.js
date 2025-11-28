@@ -11,97 +11,82 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_service_1 = require("../../prisma/prisma.service");
 const jwt_1 = require("@nestjs/jwt");
-const bcrypt = require("bcrypt");
-const crypto_1 = require("crypto");
+const bcrypt = require("bcryptjs");
+const user_service_1 = require("../user/user.service");
+const audit_log_service_1 = require("../audit-log/audit-log.service");
 let AuthService = class AuthService {
-    constructor(prisma, jwt) {
-        this.prisma = prisma;
-        this.jwt = jwt;
+    constructor(jwtService, userService, audit) {
+        this.jwtService = jwtService;
+        this.userService = userService;
+        this.audit = audit;
     }
-    async register(dto) {
-        const exists = await this.prisma.user.findUnique({
-            where: { email: dto.email }
-        });
-        if (exists)
-            throw new common_1.ConflictException('Email already registered');
-        const hashed = await bcrypt.hash(dto.password, 10);
-        const user = await this.prisma.user.create({
-            data: {
-                email: dto.email,
-                password: hashed,
-                name: dto.name,
-                role: 'USER'
-            }
-        });
-        return this.generateToken(user.id, user.email, user.role);
+    async validateUser(email, pass) {
+        const user = await this.userService.findByEmail(email);
+        if (!user)
+            return null;
+        const match = await bcrypt.compare(pass, user.password);
+        if (!match)
+            return null;
+        if (!user.isActive) {
+            throw new common_1.UnauthorizedException('User is deactivated');
+        }
+        return user;
     }
     async login(dto) {
-        const user = await this.prisma.user.findUnique({
-            where: { email: dto.email }
-        });
-        if (!user)
+        const user = await this.validateUser(dto.email, dto.password);
+        if (!user) {
+            await this.audit.log(null, 'LOGIN_FAILED', 'Auth', undefined, {
+                email: dto.email
+            });
             throw new common_1.UnauthorizedException('Invalid credentials');
-        const ok = await bcrypt.compare(dto.password, user.password);
-        if (!ok)
-            throw new common_1.UnauthorizedException('Invalid credentials');
-        return this.generateToken(user.id, user.email, user.role);
-    }
-    async logout(_userId) {
-        return { message: 'Logged out successfully' };
-    }
-    async forgotPassword(dto) {
-        const user = await this.prisma.user.findUnique({
-            where: { email: dto.email }
-        });
-        if (!user)
-            throw new common_1.NotFoundException('User not found');
-        const token = (0, crypto_1.randomBytes)(32).toString('hex');
-        const expires = new Date(Date.now() + 10 * 60 * 1000);
-        await this.prisma.passwordResetToken.create({
-            data: {
-                userId: user.id,
-                token,
-                expiresAt: expires
-            }
-        });
-        return { resetToken: token };
-    }
-    async resetPassword(dto) {
-        const record = await this.prisma.passwordResetToken.findFirst({
-            where: { token: dto.token }
-        });
-        if (!record)
-            throw new common_1.UnauthorizedException('Invalid token');
-        if (record.expiresAt < new Date())
-            throw new common_1.UnauthorizedException('Token expired');
-        const hashed = await bcrypt.hash(dto.newPassword, 10);
-        await this.prisma.user.update({
-            where: { id: record.userId },
-            data: { password: hashed }
-        });
-        await this.prisma.passwordResetToken.delete({
-            where: { id: record.id }
-        });
-        return { message: 'Password reset successfully' };
-    }
-    async generateToken(id, email, role) {
-        const payload = { sub: id, email, role };
-        const token = await this.jwt.signAsync(payload, {
-            secret: process.env.JWT_SECRET || 'super-secret-jwt-key',
-            expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-        });
-        return {
-            accessToken: token,
-            user: { id, email, role }
+        }
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            role: user.role
         };
+        const accessToken = await this.jwtService.signAsync(payload, {
+            secret: process.env.JWT_SECRET || 'change-this-secret',
+            expiresIn: process.env.JWT_EXPIRES_IN || '1d'
+        });
+        await this.userService.updateLastLogin(user.id);
+        await this.audit.log(user.id, 'LOGIN', 'Auth');
+        return {
+            accessToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role
+            }
+        };
+    }
+    async register(dto) {
+        const exists = await this.userService.findByEmail(dto.email);
+        if (exists)
+            throw new common_1.BadRequestException('Email already exists');
+        const user = await this.userService.create({
+            email: dto.email,
+            password: dto.password,
+            name: dto.name
+        });
+        await this.audit.log(user.id, 'REGISTER', 'Auth', user.id);
+        return {
+            id: user.id,
+            email: user.email,
+            name: user.name
+        };
+    }
+    async me(user) {
+        return this.userService.findOne(user.id);
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        jwt_1.JwtService])
+    __metadata("design:paramtypes", [jwt_1.JwtService,
+        user_service_1.UserService,
+        audit_log_service_1.AuditLogService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

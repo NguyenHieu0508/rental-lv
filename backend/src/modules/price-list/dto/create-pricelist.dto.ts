@@ -1,18 +1,19 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsBoolean } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreatePriceListDto {
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     name!: string;
 
     @IsOptional()
     @IsString()
     description?: string;
 
-    @IsString()
     @IsOptional()
-    currency?: string;
+    @IsString()
+    currency?: string; // default VND
 
+    @IsNotEmpty()
     @IsNumber()
     dailyRate!: number;
 
@@ -25,6 +26,5 @@ export class CreatePriceListDto {
     weekendRate?: number;
 
     @IsOptional()
-    @IsBoolean()
     isActive?: boolean;
 }

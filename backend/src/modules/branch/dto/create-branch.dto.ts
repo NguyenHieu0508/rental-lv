@@ -23,4 +23,25 @@ export class CreateBranchDto {
     @IsOptional()
     @IsString()
     phone?: string;
+
+    @IsOptional()
+    @IsString()
+    email?: string;
+
+    @IsOptional()
+    latitude?: number;
+
+    @IsOptional()
+    longitude?: number;
+
+    @IsOptional()
+    @IsString()
+    googleMapUrl?: string;
+
+    @IsOptional()
+    @IsString()
+    businessHours?: string;
+
+    @IsOptional()
+    isActive?: boolean;
 }

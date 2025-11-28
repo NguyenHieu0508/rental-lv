@@ -15,8 +15,8 @@ class CreatePriceListDto {
 }
 exports.CreatePriceListDto = CreatePriceListDto;
 __decorate([
-    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePriceListDto.prototype, "name", void 0);
 __decorate([
@@ -25,11 +25,12 @@ __decorate([
     __metadata("design:type", String)
 ], CreatePriceListDto.prototype, "description", void 0);
 __decorate([
-    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePriceListDto.prototype, "currency", void 0);
 __decorate([
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], CreatePriceListDto.prototype, "dailyRate", void 0);
@@ -45,7 +46,6 @@ __decorate([
 ], CreatePriceListDto.prototype, "weekendRate", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreatePriceListDto.prototype, "isActive", void 0);
 //# sourceMappingURL=create-pricelist.dto.js.map

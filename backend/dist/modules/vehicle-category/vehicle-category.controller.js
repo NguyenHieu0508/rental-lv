@@ -15,51 +15,44 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehicleCategoryController = void 0;
 const common_1 = require("@nestjs/common");
 const vehicle_category_service_1 = require("./vehicle-category.service");
+const vehicle_category_query_dto_1 = require("./dto/vehicle-category-query.dto");
 const create_vehicle_category_dto_1 = require("./dto/create-vehicle-category.dto");
 const update_vehicle_category_dto_1 = require("./dto/update-vehicle-category.dto");
 let VehicleCategoryController = class VehicleCategoryController {
     constructor(service) {
         this.service = service;
     }
-    findAll(keyword) {
-        return this.service.findAll(keyword);
+    list(query) {
+        return this.service.findAll(query);
     }
-    findOne(id) {
-        this.validateId(id);
+    detail(id) {
         return this.service.findOne(id);
     }
     create(dto) {
         return this.service.create(dto);
     }
     update(id, dto) {
-        this.validateId(id);
         return this.service.update(id, dto);
     }
     delete(id) {
-        this.validateId(id);
         return this.service.delete(id);
-    }
-    validateId(id) {
-        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-            throw new common_1.BadRequestException('Invalid ID format');
-        }
     }
 };
 exports.VehicleCategoryController = VehicleCategoryController;
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('keyword')),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [vehicle_category_query_dto_1.VehicleCategoryQueryDto]),
     __metadata("design:returntype", void 0)
-], VehicleCategoryController.prototype, "findAll", null);
+], VehicleCategoryController.prototype, "list", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], VehicleCategoryController.prototype, "findOne", null);
+], VehicleCategoryController.prototype, "detail", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -68,7 +61,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VehicleCategoryController.prototype, "create", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

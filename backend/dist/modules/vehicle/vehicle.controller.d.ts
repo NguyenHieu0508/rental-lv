@@ -1,28 +1,101 @@
 import { VehicleService } from './vehicle.service';
+import { VehicleQueryDto } from './dto/vehicle-query.dto';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 export declare class VehicleController {
-    private readonly service;
+    private service;
     constructor(service: VehicleService);
-    findAll(keyword?: string): Promise<{
-        category: {
+    list(query: VehicleQueryDto): Promise<{
+        items: ({
+            branch: {
+                id: string;
+                name: string;
+                code: string | null;
+                slug: string | null;
+                address: string | null;
+                city: string | null;
+                country: string | null;
+                phone: string | null;
+                email: string | null;
+                latitude: number | null;
+                longitude: number | null;
+                googleMapUrl: string | null;
+                businessHours: string | null;
+                metaTitle: string | null;
+                metaDescription: string | null;
+                isActive: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+            };
+            category: {
+                id: string;
+                name: string;
+                code: string | null;
+                slug: string | null;
+                description: string | null;
+                imageUrl: string | null;
+                metaTitle: string | null;
+                metaDescription: string | null;
+                displayOrder: number | null;
+                createdAt: Date;
+                updatedAt: Date;
+            };
+            priceList: {
+                id: string;
+                name: string;
+                description: string | null;
+                currency: string;
+                dailyRate: number;
+                hourlyRate: number | null;
+                weekendRate: number | null;
+                holidayRate: number | null;
+                isActive: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+            } | null;
+        } & {
             id: string;
             name: string;
-            code: string | null;
-            description: string | null;
-            imageUrl: string | null;
+            vehicleType: string | null;
+            licensePlate: string;
+            brand: string | null;
+            model: string | null;
+            year: number | null;
+            color: string | null;
+            seatCount: number | null;
+            transmission: string | null;
+            fuelType: string | null;
+            mileage: number | null;
+            status: string;
+            slug: string | null;
             metaTitle: string | null;
             metaDescription: string | null;
-            seoTitle: string | null;
-            hTitle: string | null;
-            displayOrder: number | null;
+            seoDescription: string | null;
+            rating: number | null;
+            reviewCount: number | null;
+            photos: string[];
+            priceListId: string | null;
+            overridePriceEnabled: boolean;
+            overrideDailyRate: number | null;
+            overrideHourlyRate: number | null;
+            overrideWeekendRate: number | null;
+            overrideHolidayRate: number | null;
+            categoryId: string;
+            branchId: string;
             createdAt: Date;
             updatedAt: Date;
-        } | undefined;
+        })[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
+    detail(id: string): Promise<{
         branch: {
             id: string;
             name: string;
             code: string | null;
+            slug: string | null;
             address: string | null;
             city: string | null;
             country: string | null;
@@ -32,58 +105,53 @@ export declare class VehicleController {
             longitude: number | null;
             googleMapUrl: string | null;
             businessHours: string | null;
+            metaTitle: string | null;
+            metaDescription: string | null;
             isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
-        } | undefined;
-        priceList: {
+        };
+        bookings: {
             id: string;
-            name: string;
-            description: string | null;
-            currency: string;
-            dailyRate: number;
-            hourlyRate: number | null;
-            weekendRate: number | null;
-            isActive: boolean;
+            bookingCode: string;
+            customerId: string;
+            vehicleId: string;
+            branchId: string;
+            returnBranchId: string | null;
+            pickupDate: Date;
+            returnDate: Date;
+            status: string;
+            baseAmount: number;
+            discountAmount: number;
+            totalAmount: number;
+            promotionId: string | null;
+            cancelReason: string | null;
+            note: string | null;
             createdAt: Date;
             updatedAt: Date;
-        } | undefined;
-        categoryId: any;
-        branchId: any;
-        priceListId: any;
-    }[]>;
-    findOne(id: string): Promise<{
+        }[];
         category: {
             id: string;
             name: string;
             code: string | null;
+            slug: string | null;
             description: string | null;
             imageUrl: string | null;
             metaTitle: string | null;
             metaDescription: string | null;
-            seoTitle: string | null;
-            hTitle: string | null;
             displayOrder: number | null;
             createdAt: Date;
             updatedAt: Date;
-        } | null;
-        branch: {
+        };
+        reviews: {
             id: string;
-            name: string;
-            code: string | null;
-            address: string | null;
-            city: string | null;
-            country: string | null;
-            phone: string | null;
-            email: string | null;
-            latitude: number | null;
-            longitude: number | null;
-            googleMapUrl: string | null;
-            businessHours: string | null;
-            isActive: boolean;
+            bookingId: string | null;
+            customerId: string;
+            vehicleId: string;
+            rating: number;
+            comment: string | null;
             createdAt: Date;
-            updatedAt: Date;
-        } | null;
+        }[];
         priceList: {
             id: string;
             name: string;
@@ -92,10 +160,26 @@ export declare class VehicleController {
             dailyRate: number;
             hourlyRate: number | null;
             weekendRate: number | null;
+            holidayRate: number | null;
             isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
         } | null;
+        maintenances: {
+            id: string;
+            vehicleId: string;
+            title: string;
+            description: string | null;
+            maintenanceDate: Date;
+            odometer: number | null;
+            performedBy: string | null;
+            cost: number | null;
+            status: string;
+            nextMaintenanceAt: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
+    } & {
         id: string;
         name: string;
         vehicleType: string | null;
@@ -116,13 +200,18 @@ export declare class VehicleController {
         rating: number | null;
         reviewCount: number | null;
         photos: string[];
+        priceListId: string | null;
+        overridePriceEnabled: boolean;
+        overrideDailyRate: number | null;
+        overrideHourlyRate: number | null;
+        overrideWeekendRate: number | null;
+        overrideHolidayRate: number | null;
         categoryId: string;
         branchId: string;
-        priceListId: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    create(dto: CreateVehicleDto): import(".prisma/client").Prisma.Prisma__VehicleClient<{
+    create(dto: CreateVehicleDto): Promise<{
         id: string;
         name: string;
         vehicleType: string | null;
@@ -143,12 +232,17 @@ export declare class VehicleController {
         rating: number | null;
         reviewCount: number | null;
         photos: string[];
+        priceListId: string | null;
+        overridePriceEnabled: boolean;
+        overrideDailyRate: number | null;
+        overrideHourlyRate: number | null;
+        overrideWeekendRate: number | null;
+        overrideHolidayRate: number | null;
         categoryId: string;
         branchId: string;
-        priceListId: string | null;
         createdAt: Date;
         updatedAt: Date;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
+    }>;
     update(id: string, dto: UpdateVehicleDto): Promise<{
         id: string;
         name: string;
@@ -170,13 +264,20 @@ export declare class VehicleController {
         rating: number | null;
         reviewCount: number | null;
         photos: string[];
+        priceListId: string | null;
+        overridePriceEnabled: boolean;
+        overrideDailyRate: number | null;
+        overrideHourlyRate: number | null;
+        overrideWeekendRate: number | null;
+        overrideHolidayRate: number | null;
         categoryId: string;
         branchId: string;
-        priceListId: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    remove(id: string): Promise<{
+    updateStatus(id: string, body: {
+        status: string;
+    }): Promise<{
         id: string;
         name: string;
         vehicleType: string | null;
@@ -197,9 +298,46 @@ export declare class VehicleController {
         rating: number | null;
         reviewCount: number | null;
         photos: string[];
+        priceListId: string | null;
+        overridePriceEnabled: boolean;
+        overrideDailyRate: number | null;
+        overrideHourlyRate: number | null;
+        overrideWeekendRate: number | null;
+        overrideHolidayRate: number | null;
         categoryId: string;
         branchId: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    delete(id: string): Promise<{
+        id: string;
+        name: string;
+        vehicleType: string | null;
+        licensePlate: string;
+        brand: string | null;
+        model: string | null;
+        year: number | null;
+        color: string | null;
+        seatCount: number | null;
+        transmission: string | null;
+        fuelType: string | null;
+        mileage: number | null;
+        status: string;
+        slug: string | null;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        seoDescription: string | null;
+        rating: number | null;
+        reviewCount: number | null;
+        photos: string[];
         priceListId: string | null;
+        overridePriceEnabled: boolean;
+        overrideDailyRate: number | null;
+        overrideHourlyRate: number | null;
+        overrideWeekendRate: number | null;
+        overrideHolidayRate: number | null;
+        categoryId: string;
+        branchId: string;
         createdAt: Date;
         updatedAt: Date;
     }>;

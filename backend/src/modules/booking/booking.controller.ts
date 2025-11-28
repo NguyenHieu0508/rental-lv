@@ -1,38 +1,45 @@
-import {
-    Body, Controller, Get, Param, Patch, Post, UseGuards
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UpdateBookingDto } from './dto/update-booking.dto';
+import { BookingQueryDto } from './dto/booking-query.dto';
 
-@ApiTags('bookings')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('bookings')
 export class BookingController {
-    constructor(private readonly bookingService: BookingService) { }
+    constructor(private service: BookingService) { }
 
     @Get()
-    findAll() {
-        return this.bookingService.findAll();
+    list(@Query() query: BookingQueryDto) {
+        return this.service.findAll(query);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.bookingService.findOne(id);
+    detail(@Param('id') id: string) {
+        return this.service.findOne(id);
     }
 
     @Post()
     create(@Body() dto: CreateBookingDto) {
-        return this.bookingService.create(dto);
+        return this.service.create(dto);
     }
 
-    @Patch(':id/status/:status')
-    updateStatus(
-        @Param('id') id: string,
-        @Param('status') status: string
-    ) {
-        return this.bookingService.updateStatus(id, status);
+    @Put(':id')
+    update(@Param('id') id: string, @Body() dto: UpdateBookingDto) {
+        return this.service.update(id, dto);
+    }
+
+    @Patch(':id/status')
+    changeStatus(@Param('id') id: string, @Body() body: { status: string }) {
+        return this.service.changeStatus(id, body.status);
+    }
+
+    @Patch(':id/cancel')
+    cancel(@Param('id') id: string, @Body() body: { reason: string }) {
+        return this.service.cancel(id, body.reason);
+    }
+
+    @Delete(':id')
+    delete(@Param('id') id: string) {
+        return this.service.delete(id);
     }
 }

@@ -8,16 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehicleCategoryModule = void 0;
 const common_1 = require("@nestjs/common");
+const prisma_service_1 = require("../../prisma/prisma.service");
+const audit_log_service_1 = require("../audit-log/audit-log.service");
 const vehicle_category_service_1 = require("./vehicle-category.service");
 const vehicle_category_controller_1 = require("./vehicle-category.controller");
-const prisma_service_1 = require("../../prisma/prisma.service");
 let VehicleCategoryModule = class VehicleCategoryModule {
 };
 exports.VehicleCategoryModule = VehicleCategoryModule;
 exports.VehicleCategoryModule = VehicleCategoryModule = __decorate([
     (0, common_1.Module)({
         controllers: [vehicle_category_controller_1.VehicleCategoryController],
-        providers: [vehicle_category_service_1.VehicleCategoryService, prisma_service_1.PrismaService],
+        providers: [vehicle_category_service_1.VehicleCategoryService, prisma_service_1.PrismaService, audit_log_service_1.AuditLogService],
+        exports: [vehicle_category_service_1.VehicleCategoryService]
     })
 ], VehicleCategoryModule);
 //# sourceMappingURL=vehicle-category.module.js.map

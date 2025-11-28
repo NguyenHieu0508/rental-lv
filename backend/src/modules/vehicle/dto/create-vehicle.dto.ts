@@ -1,18 +1,14 @@
-import {
-    IsString,
-    IsOptional,
-    IsNotEmpty,
-    IsInt,
-    IsArray,
-} from 'class-validator';
+import { IsArray, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class CreateVehicleDto {
     @IsString()
-    @IsNotEmpty()
     name!: string;
 
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
+    vehicleType?: string;
+
+    @IsString()
     licensePlate!: string;
 
     @IsOptional()
@@ -33,10 +29,6 @@ export class CreateVehicleDto {
 
     @IsOptional()
     @IsInt()
-    mileage?: number;
-
-    @IsOptional()
-    @IsInt()
     seatCount?: number;
 
     @IsOptional()
@@ -48,22 +40,38 @@ export class CreateVehicleDto {
     fuelType?: string;
 
     @IsOptional()
-    @IsString()
-    status?: string; // AVAILABLE, MAINTENANCE, BOOKED
-
-    @IsArray()
-    @IsString({ each: true })
-    photos!: string[]; // ⭐ MULTI IMAGE
-
-    @IsString()
-    @IsNotEmpty()
-    categoryId!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    branchId!: string;
+    @IsInt()
+    mileage?: number;
 
     @IsOptional()
     @IsString()
+    status?: string; // AVAILABLE/...
+
+    @IsOptional()
+    @IsString()
+    slug?: string;
+
+    @IsOptional()
+    @IsString()
+    metaTitle?: string;
+
+    @IsOptional()
+    @IsString()
+    metaDescription?: string;
+
+    @IsOptional()
+    @IsString()
+    seoDescription?: string;
+
+    @IsOptional()
+    photos?: string[];
+
+    @IsString()
+    categoryId!: string;
+
+    @IsString()
+    branchId!: string;
+
+    @IsOptional()
     priceListId?: string;
 }

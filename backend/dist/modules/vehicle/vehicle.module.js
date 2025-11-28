@@ -8,17 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehicleModule = void 0;
 const common_1 = require("@nestjs/common");
+const prisma_service_1 = require("../../prisma/prisma.service");
+const audit_log_service_1 = require("../audit-log/audit-log.service");
 const vehicle_service_1 = require("./vehicle.service");
 const vehicle_controller_1 = require("./vehicle.controller");
-const cloudinary_module_1 = require("../../cloudinary/cloudinary.module");
 let VehicleModule = class VehicleModule {
 };
 exports.VehicleModule = VehicleModule;
 exports.VehicleModule = VehicleModule = __decorate([
     (0, common_1.Module)({
-        imports: [cloudinary_module_1.CloudinaryModule],
         controllers: [vehicle_controller_1.VehicleController],
-        providers: [vehicle_service_1.VehicleService],
+        providers: [vehicle_service_1.VehicleService, prisma_service_1.PrismaService, audit_log_service_1.AuditLogService],
+        exports: [vehicle_service_1.VehicleService]
     })
 ], VehicleModule);
 //# sourceMappingURL=vehicle.module.js.map

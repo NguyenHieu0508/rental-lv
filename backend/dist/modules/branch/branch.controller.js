@@ -14,45 +14,48 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BranchController = void 0;
 const common_1 = require("@nestjs/common");
-const swagger_1 = require("@nestjs/swagger");
 const branch_service_1 = require("./branch.service");
+const branch_query_dto_1 = require("./dto/branch-query.dto");
 const create_branch_dto_1 = require("./dto/create-branch.dto");
 const update_branch_dto_1 = require("./dto/update-branch.dto");
-const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let BranchController = class BranchController {
-    constructor(branchService) {
-        this.branchService = branchService;
+    constructor(service) {
+        this.service = service;
     }
-    findAll() {
-        return this.branchService.findAll();
+    list(query) {
+        return this.service.findAll(query);
     }
-    findOne(id) {
-        return this.branchService.findOne(id);
+    detail(id) {
+        return this.service.findOne(id);
     }
     create(dto) {
-        return this.branchService.create(dto);
+        return this.service.create(dto);
     }
     update(id, dto) {
-        return this.branchService.update(id, dto);
+        return this.service.update(id, dto);
     }
-    remove(id) {
-        return this.branchService.remove(id);
+    deactivate(id) {
+        return this.service.deactivate(id);
+    }
+    delete(id) {
+        return this.service.delete(id);
     }
 };
 exports.BranchController = BranchController;
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [branch_query_dto_1.BranchQueryDto]),
     __metadata("design:returntype", void 0)
-], BranchController.prototype, "findAll", null);
+], BranchController.prototype, "list", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], BranchController.prototype, "findOne", null);
+], BranchController.prototype, "detail", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -61,7 +64,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], BranchController.prototype, "create", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -69,16 +72,20 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], BranchController.prototype, "update", null);
 __decorate([
+    (0, common_1.Patch)(':id/deactivate'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], BranchController.prototype, "deactivate", null);
+__decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], BranchController.prototype, "remove", null);
+], BranchController.prototype, "delete", null);
 exports.BranchController = BranchController = __decorate([
-    (0, swagger_1.ApiTags)('branches'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('branches'),
     __metadata("design:paramtypes", [branch_service_1.BranchService])
 ], BranchController);

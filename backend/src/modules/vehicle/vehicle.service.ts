@@ -1,107 +1,136 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
-import { sanitizeUpdate } from '@/common/utils/sanitize-update';
-import { CloudinaryService } from '@/cloudinary/cloudinary.service';
+import { VehicleQueryDto } from './dto/vehicle-query.dto';
 
 @Injectable()
 export class VehicleService {
-    constructor(private prisma: PrismaService, private cloudinary: CloudinaryService
+    constructor(
+        private prisma: PrismaService,
+        private audit: AuditLogService
     ) { }
 
-    async findAll(keyword?: string) {
-        const vehicles = await this.prisma.vehicle.findMany({
-            where: keyword
-                ? {
-                    OR: [
-                        { name: { contains: keyword, mode: 'insensitive' } },
-                        { licensePlate: { contains: keyword, mode: 'insensitive' } },
-                        { brand: { contains: keyword, mode: 'insensitive' } },
-                    ],
+    async findAll(query: VehicleQueryDto) {
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 20;
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+
+        if (query.search) {
+            where.OR = [
+                { name: { contains: query.search, mode: 'insensitive' } },
+                { licensePlate: { contains: query.search, mode: 'insensitive' } },
+                { brand: { contains: query.search, mode: 'insensitive' } },
+                { model: { contains: query.search, mode: 'insensitive' } }
+            ];
+        }
+
+        if (query.status) where.status = query.status;
+        if (query.branchId) where.branchId = query.branchId;
+        if (query.categoryId) where.categoryId = query.categoryId;
+
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.vehicle.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    category: true,
+                    branch: true,
+                    priceList: true
                 }
-                : {},
-            orderBy: { createdAt: 'desc' },
-        });
-
-        const categoryIds = vehicles.map((v: { categoryId: any; }) => v.categoryId);
-        const branchIds = vehicles.map((v: { branchId: any; }) => v.branchId);
-        const priceListIds = vehicles.map((v: { priceListId: any; }) => v.priceListId);
-
-        const [categories, branches, priceLists] = await Promise.all([
-            this.prisma.vehicleCategory.findMany({ where: { id: { in: categoryIds } } }),
-            this.prisma.branch.findMany({ where: { id: { in: branchIds } } }),
-            this.prisma.priceList.findMany({ where: { id: { in: priceListIds } } }),
+            }),
+            this.prisma.vehicle.count({ where })
         ]);
 
-        return vehicles.map((v: { categoryId: any; branchId: any; priceListId: any; }) => ({
-            ...v,
-            category: categories.find((c: { id: any; }) => c.id === v.categoryId),
-            branch: branches.find((b: { id: any; }) => b.id === v.branchId),
-            priceList: priceLists.find((p: { id: any; }) => p.id === v.priceListId),
-        }));
+        return {
+            items,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
     async findOne(id: string) {
-        const vehicle = await this.prisma.vehicle.findUnique({ where: { id } });
-        if (!vehicle) throw new NotFoundException('Vehicle not found');
-
-        const categoryPromise = vehicle.categoryId
-            ? this.prisma.vehicleCategory.findUnique({ where: { id: vehicle.categoryId } })
-            : null;
-
-        const branchPromise = vehicle.branchId
-            ? this.prisma.branch.findUnique({ where: { id: vehicle.branchId } })
-            : null;
-
-        const priceListPromise = vehicle.priceListId
-            ? this.prisma.priceList.findUnique({ where: { id: vehicle.priceListId } })
-            : null;
-
-        const [category, branch, priceList] = await Promise.all([
-            categoryPromise,
-            branchPromise,
-            priceListPromise,
-        ]);
-
-        return {
-            ...vehicle,
-            category,
-            branch,
-            priceList,
-        };
-    }
-
-
-    create(dto: CreateVehicleDto) {
-        return this.prisma.vehicle.create({ data: dto });
-    }
-
-    async update(id: string, dto: UpdateVehicleDto) {
-        await this.findOne(id);
-
-        const safeData = sanitizeUpdate(dto);
-
-        return this.prisma.vehicle.update({
+        const vehicle = await this.prisma.vehicle.findUnique({
             where: { id },
-            data: safeData,
+            include: {
+                category: true,
+                branch: true,
+                priceList: true,
+                maintenances: true,
+                bookings: true,
+                reviews: true
+            }
         });
+        if (!vehicle) throw new NotFoundException('Vehicle not found');
+        return vehicle;
     }
 
-    async remove(id: string) {
-        await this.findOne(id);
+    async create(dto: CreateVehicleDto, actorId?: string) {
+        const exists = await this.prisma.vehicle.findUnique({
+            where: { licensePlate: dto.licensePlate }
+        });
+        if (exists) throw new BadRequestException('License plate already exists');
+
+        const vehicle = await this.prisma.vehicle.create({
+            data: {
+                ...dto,
+                status: dto.status ?? 'AVAILABLE',
+                photos: dto.photos ?? []
+            }
+        });
+
+        await this.audit.log(actorId ?? null, 'CREATE', 'Vehicle', vehicle.id, vehicle);
+        return vehicle;
+    }
+
+    async update(id: string, dto: UpdateVehicleDto, actorId?: string) {
+        const before = await this.findOne(id);
+
+        if (dto.licensePlate && dto.licensePlate !== before.licensePlate) {
+            const exists = await this.prisma.vehicle.findUnique({
+                where: { licensePlate: dto.licensePlate }
+            });
+            if (exists) throw new BadRequestException('License plate already exists');
+        }
+
+        const vehicle = await this.prisma.vehicle.update({
+            where: { id },
+            data: {
+                ...dto,
+                photos: dto.photos ?? before.photos
+            }
+        });
+
+        await this.audit.log(actorId ?? null, 'UPDATE', 'Vehicle', id, {
+            before,
+            after: vehicle
+        });
+
+        return vehicle;
+    }
+
+    async updateStatus(id: string, status: string, actorId?: string) {
+        const vehicle = await this.prisma.vehicle.update({
+            where: { id },
+            data: { status }
+        });
+
+        await this.audit.log(actorId ?? null, 'STATUS_UPDATE', 'Vehicle', id, {
+            status
+        });
+
+        return vehicle;
+    }
+
+    async delete(id: string, actorId?: string) {
+        await this.audit.log(actorId ?? null, 'DELETE', 'Vehicle', id);
         return this.prisma.vehicle.delete({ where: { id } });
     }
-    async uploadPhotos(files: Express.Multer.File[]) {
-        const upload = files.map((file) =>
-            this.cloudinary.uploadImage(file)
-        );
-
-        const results = await Promise.all(upload);
-
-        return {
-            urls: results.map((r) => r.secure_url),
-        };
-    }
-
 }

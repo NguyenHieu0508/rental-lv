@@ -11,14 +11,16 @@ generator client {
 }
 
 ///////////////////////////////////////////////////////////
-// USER = ACCOUNT (ĐĂNG NHẬP)
+// USER / ACCOUNT
 ///////////////////////////////////////////////////////////
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   password  String
   name      String?
-  role      String   @default("CUSTOMER") // ADMIN / STAFF / CUSTOMER
+  role      String   @default("CUSTOMER")
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -26,17 +28,21 @@ model User {
   employee Employee?
 
   passwordResetTokens PasswordResetToken[]
+  notifications       Notification[]
 }
 
 ///////////////////////////////////////////////////////////
-// CUSTOMER (14 field + avatar)
+// CUSTOMER
 ///////////////////////////////////////////////////////////
 model Customer {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  fullName String
-  phone    String
-  email    String?
-  address  String?
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  fullName      String
+  phone         String
+  email         String?
+  address       String?
+  dateOfBirth   DateTime?
+  gender        String?
+  isVerified    Boolean  @default(false)
 
   driverLicenseNo     String?
   driverLicenseExpiry DateTime?
@@ -48,35 +54,37 @@ model Customer {
   totalSpent     Float  @default(0)
 
   avatarUrl String?
-  userId    String? @unique @db.ObjectId
-  user      User?   @relation(fields: [userId], references: [id])
 
-  bookings Booking[]
-  invoices Invoice[]
-  reviews  Review[]
+  userId String? @unique @db.ObjectId
+  user   User?   @relation(fields: [userId], references: [id])
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Deposit   Deposit[]
+  bookings            Booking[]
+  invoices            Invoice[]
+  reviews             Review[]
+  deposits            Deposit[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 ///////////////////////////////////////////////////////////
 // EMPLOYEE
 ///////////////////////////////////////////////////////////
 model Employee {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  fullName   String
-  phone      String?
-  email      String?
-  nationalId String?
-
-  department String?
-  position   String?
-  salary     Float?
-  status     String    @default("ACTIVE")
-  hireDate   DateTime?
-
-  avatarUrl String?
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  fullName    String
+  phone       String?
+  email       String?
+  nationalId  String?
+  department  String?
+  position    String?
+  salary      Float?
+  status      String   @default("ACTIVE")
+  hireDate    DateTime?
+  avatarUrl   String?
+  bio         String?
+  permissions String[]
 
   userId String? @unique @db.ObjectId
   user   User?   @relation(fields: [userId], references: [id])
@@ -84,29 +92,32 @@ model Employee {
   branchId String? @db.ObjectId
   branch   Branch? @relation(fields: [branchId], references: [id])
 
+  authoredPosts BlogPost[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  authoredPosts BlogPost[]
 }
 
 ///////////////////////////////////////////////////////////
 // BRANCH
 ///////////////////////////////////////////////////////////
 model Branch {
-  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
   name    String
-  code    String? @unique
+  code    String?  @unique
+  slug    String?  @unique
   address String?
   city    String?
   country String?
   phone   String?
   email   String?
 
-  latitude      Float?
-  longitude     Float?
-  googleMapUrl  String?
-  businessHours String?
+  latitude        Float?
+  longitude       Float?
+  googleMapUrl    String?
+  businessHours   String?
+  metaTitle       String?
+  metaDescription String?
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -124,36 +135,37 @@ model Branch {
 // VEHICLE CATEGORY
 ///////////////////////////////////////////////////////////
 model VehicleCategory {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   code        String? @unique
+  slug        String? @unique
   description String?
 
   imageUrl        String?
   metaTitle       String?
   metaDescription String?
-  seoTitle        String?
-  hTitle          String?
   displayOrder    Int?    @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  vehicles Vehicle[]
+  vehicles     Vehicle[]
+  pricingRules PricingRule[]
 }
 
 ///////////////////////////////////////////////////////////
-// PRICE LIST
+// PRICE LIST (theo loại xe / default)
 ///////////////////////////////////////////////////////////
 model PriceList {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
-  currency    String  @default("VND")
+  currency    String   @default("VND")
 
   dailyRate   Float
   hourlyRate  Float?
   weekendRate Float?
+  holidayRate Float?
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -163,7 +175,7 @@ model PriceList {
 }
 
 ///////////////////////////////////////////////////////////
-// VEHICLE
+// VEHICLE (giá riêng hoặc theo PriceList)
 ///////////////////////////////////////////////////////////
 model Vehicle {
   id String @id @default(auto()) @map("_id") @db.ObjectId
@@ -187,19 +199,27 @@ model Vehicle {
   seoDescription  String?
   rating          Float?  @default(0)
   reviewCount     Int?    @default(0)
+  photos          String[]
 
-  photos String[]
+  // PriceList default
+  priceListId String?     @db.ObjectId
+  priceList   PriceList?  @relation(fields: [priceListId], references: [id])
 
-  categoryId  String  @db.ObjectId
-  branchId    String  @db.ObjectId
-  priceListId String? @db.ObjectId
+  // Override price by vehicle
+  overridePriceEnabled Boolean @default(false)
+  overrideDailyRate    Float?
+  overrideHourlyRate   Float?
+  overrideWeekendRate  Float?
+  overrideHolidayRate  Float?
+
+  categoryId String @db.ObjectId
+  branchId   String @db.ObjectId
+
+  category VehicleCategory @relation(fields: [categoryId], references: [id])
+  branch   Branch          @relation(fields: [branchId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  category  VehicleCategory @relation(fields: [categoryId], references: [id])
-  branch    Branch          @relation(fields: [branchId], references: [id])
-  priceList PriceList?      @relation(fields: [priceListId], references: [id])
 
   vehicleDocuments VehicleDocument[]
   maintenances     Maintenance[]
@@ -267,8 +287,9 @@ model Booking {
   handover     Handover?
   returnReport ReturnReport?
   invoice      Invoice?
-  review       Review?       @relation(fields: [reviewId], references: [id])
-  reviewId     String?       @db.ObjectId
+  review       Review?
+
+  loyaltyTransactions LoyaltyTransaction[]
 }
 
 ///////////////////////////////////////////////////////////
@@ -349,8 +370,7 @@ model DepositDetail {
 // HANDOVER
 ///////////////////////////////////////////////////////////
 model Handover {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
   bookingId String @unique @db.ObjectId
 
   odoStart          Int?
@@ -362,8 +382,7 @@ model Handover {
   accessories       String?
   customerSignature String?
   handedOverBy      String?
-
-  photoUrls String[]
+  photoUrls         String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -386,14 +405,12 @@ model ReturnReport {
   condition      String?
   checklist      String?
   returnBranchId String? @db.ObjectId
-
   note      String?
   photoUrls String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   booking      Booking @relation(fields: [bookingId], references: [id])
   returnBranch Branch? @relation("ReturnReportBranch", fields: [returnBranchId], references: [id])
 }
@@ -413,6 +430,8 @@ model Invoice {
   subtotal       Float
   surchargeTotal Float @default(0)
   discountTotal  Float @default(0)
+  vatPercent     Float @default(0)
+  vatAmount      Float @default(0)
   totalAmount    Float
 
   status String  @default("UNPAID")
@@ -432,8 +451,7 @@ model Invoice {
 // PAYMENT
 ///////////////////////////////////////////////////////////
 model Payment {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   invoiceId   String   @db.ObjectId
   paidAt      DateTime @default(now())
   method      String
@@ -511,29 +529,27 @@ model AuditLog {
 // REVIEW
 ///////////////////////////////////////////////////////////
 model Review {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
-  bookingId  String? @unique @db.ObjectId
-  customerId String  @db.ObjectId
-  vehicleId  String  @db.ObjectId
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId  String?  @unique @db.ObjectId
+  customerId String   @db.ObjectId
+  vehicleId  String   @db.ObjectId
 
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
 
-  customer Customer  @relation(fields: [customerId], references: [id])
-  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id])
-  Booking  Booking[]
+  customer Customer @relation(fields: [customerId], references: [id])
+  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id])
+  booking  Booking? @relation(fields: [bookingId], references: [id])
 }
 
 ///////////////////////////////////////////////////////////
 // BLOG CATEGORY
 ///////////////////////////////////////////////////////////
 model BlogCategory {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  slug        String  @unique
+  slug        String @unique
   description String?
 
   createdAt DateTime @default(now())
@@ -546,17 +562,19 @@ model BlogCategory {
 // BLOG POST
 ///////////////////////////////////////////////////////////
 model BlogPost {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
   categoryId String? @db.ObjectId
   authorId   String? @db.ObjectId
 
   title        String
-  slug         String  @unique
+  slug         String @unique
   content      String
   excerpt      String?
   thumbnailUrl String?
-  status       String  @default("DRAFT")
+  status       String @default("DRAFT")
+
+  metaTitle       String?
+  metaDescription String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -566,15 +584,17 @@ model BlogPost {
 }
 
 ///////////////////////////////////////////////////////////
-// PAGE (FAQ, ABOUT, TERMS...)
+// PAGE
 ///////////////////////////////////////////////////////////
 model Page {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
   title   String
   slug    String @unique
   content String
   status  String @default("PUBLISHED")
+
+  metaTitle       String?
+  metaDescription String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -602,7 +622,163 @@ model SystemConfig {
   key         String  @unique
   value       String
   description String?
+  category    String?
 
   updatedBy String?  @db.ObjectId
   updatedAt DateTime @default(now())
+}
+
+///////////////////////////////////////////////////////////
+// MARKETING
+///////////////////////////////////////////////////////////
+model NotificationTemplate {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  code    String @unique
+  subject String?
+  content String?
+  type    String // email, sms, push
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notifications Notification[]
+  campaigns     MarketingCampaign[]
+}
+
+model Notification {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String @db.ObjectId
+  templateId String? @db.ObjectId
+
+  title   String
+  message String
+  status  String @default("UNREAD")
+
+  createdAt DateTime @default(now())
+
+  user     User                 @relation(fields: [userId], references: [id])
+  template NotificationTemplate? @relation(fields: [templateId], references: [id])
+}
+
+model CustomerSegment {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  conditions  Json
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaigns MarketingCampaign[]
+}
+
+model MarketingCampaign {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  segmentId  String @db.ObjectId
+  templateId String @db.ObjectId
+  status     String @default("DRAFT")
+  scheduledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  segment  CustomerSegment      @relation(fields: [segmentId], references: [id])
+  template NotificationTemplate @relation(fields: [templateId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// LOYALTY PROGRAM
+///////////////////////////////////////////////////////////
+model LoyaltyProgram {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  minAmount   Float?
+  pointsPer100k Int?
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions LoyaltyTransaction[]
+}
+
+model LoyaltyTransaction {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String @db.ObjectId
+  programId  String? @db.ObjectId
+  bookingId  String? @db.ObjectId
+
+  type     String // earn, redeem
+  points   Int
+  note     String?
+  createdAt DateTime @default(now())
+
+  customer Customer        @relation(fields: [customerId], references: [id])
+  program  LoyaltyProgram? @relation(fields: [programId], references: [id])
+  booking  Booking?        @relation(fields: [bookingId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// ENTERPRISE (MULTI-TENANT)
+///////////////////////////////////////////////////////////
+model SubscriptionPlan {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Float
+  features    String[]
+  duration    Int // days
+  description String?
+
+  tenants   Tenant[]
+  createdAt DateTime @default(now())
+}
+
+model Tenant {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  subdomain      String? @unique
+  customDomain   String?
+  subscriptionId String @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscription SubscriptionPlan @relation(fields: [subscriptionId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// PRICING RULE (dynamic pricing)
+///////////////////////////////////////////////////////////
+model PricingRule {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId String @db.ObjectId
+  name       String
+  type       String   // weekend, holiday, seasonal
+  percent    Float?
+  amount     Float?
+  startDate  DateTime?
+  endDate    DateTime?
+
+  createdAt DateTime @default(now())
+
+  category VehicleCategory @relation(fields: [categoryId], references: [id])
+}
+
+///////////////////////////////////////////////////////////
+// PARTNER (Affiliate / Referral)
+///////////////////////////////////////////////////////////
+model Partner {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  code  String @unique
+  phone String?
+  email String?
+
+  note   String?
+  status String @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

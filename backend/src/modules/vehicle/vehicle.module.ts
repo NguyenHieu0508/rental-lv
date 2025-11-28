@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { PrismaService } from '@/prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { VehicleService } from './vehicle.service';
 import { VehicleController } from './vehicle.controller';
-import { CloudinaryModule } from '@/cloudinary/cloudinary.module';
 
 @Module({
-    imports: [CloudinaryModule],
     controllers: [VehicleController],
-    providers: [VehicleService],
+    providers: [VehicleService, PrismaService, AuditLogService],
+    exports: [VehicleService]
 })
 export class VehicleModule { }

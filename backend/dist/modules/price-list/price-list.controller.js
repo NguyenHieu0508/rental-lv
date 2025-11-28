@@ -14,17 +14,18 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PriceListController = void 0;
 const common_1 = require("@nestjs/common");
+const price_list_service_1 = require("./price-list.service");
+const price_list_query_dto_1 = require("./dto/price-list-query.dto");
 const create_pricelist_dto_1 = require("./dto/create-pricelist.dto");
 const update_pricelist_dto_1 = require("./dto/update-pricelist.dto");
-const price_list_service_1 = require("./price-list.service");
 let PriceListController = class PriceListController {
     constructor(service) {
         this.service = service;
     }
-    findAll(keyword) {
-        return this.service.findAll(keyword);
+    list(query) {
+        return this.service.findAll(query);
     }
-    findOne(id) {
+    detail(id) {
         return this.service.findOne(id);
     }
     create(dto) {
@@ -33,25 +34,28 @@ let PriceListController = class PriceListController {
     update(id, dto) {
         return this.service.update(id, dto);
     }
-    remove(id) {
-        return this.service.remove(id);
+    deactivate(id) {
+        return this.service.deactivate(id);
+    }
+    delete(id) {
+        return this.service.delete(id);
     }
 };
 exports.PriceListController = PriceListController;
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('keyword')),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [price_list_query_dto_1.PriceListQueryDto]),
     __metadata("design:returntype", void 0)
-], PriceListController.prototype, "findAll", null);
+], PriceListController.prototype, "list", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], PriceListController.prototype, "findOne", null);
+], PriceListController.prototype, "detail", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -60,7 +64,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PriceListController.prototype, "create", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -68,12 +72,19 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PriceListController.prototype, "update", null);
 __decorate([
+    (0, common_1.Patch)(':id/deactivate'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], PriceListController.prototype, "deactivate", null);
+__decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], PriceListController.prototype, "remove", null);
+], PriceListController.prototype, "delete", null);
 exports.PriceListController = PriceListController = __decorate([
     (0, common_1.Controller)('price-lists'),
     __metadata("design:paramtypes", [price_list_service_1.PriceListService])

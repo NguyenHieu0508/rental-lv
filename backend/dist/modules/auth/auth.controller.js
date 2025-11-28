@@ -14,41 +14,26 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
-const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
-const register_dto_1 = require("./dto/register.dto");
 const login_dto_1 = require("./dto/login.dto");
-const forgot_password_dto_1 = require("./dto/forgot-password.dto");
-const reset_password_dto_1 = require("./dto/reset-password.dto");
-const jwt_auth_guard_1 = require("./jwt-auth.guard");
+const register_dto_1 = require("./dto/register.dto");
+const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
+const current_user_decorator_1 = require("./decorators/current-user.decorator");
 let AuthController = class AuthController {
-    constructor(auth) {
-        this.auth = auth;
-    }
-    register(dto) {
-        return this.auth.register(dto);
+    constructor(authService) {
+        this.authService = authService;
     }
     login(dto) {
-        return this.auth.login(dto);
+        return this.authService.login(dto);
     }
-    forgot(dto) {
-        return this.auth.forgotPassword(dto);
+    register(dto) {
+        return this.authService.register(dto);
     }
-    reset(dto) {
-        return this.auth.resetPassword(dto);
-    }
-    logout(req) {
-        return this.auth.logout(req.user.userId);
+    getMe(user) {
+        return this.authService.me(user);
     }
 };
 exports.AuthController = AuthController;
-__decorate([
-    (0, common_1.Post)('register'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
@@ -57,30 +42,21 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
 __decorate([
-    (0, common_1.Post)('forgot-password'),
+    (0, common_1.Post)('register'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [forgot_password_dto_1.ForgotPasswordDto]),
+    __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
     __metadata("design:returntype", void 0)
-], AuthController.prototype, "forgot", null);
+], AuthController.prototype, "register", null);
 __decorate([
-    (0, common_1.Post)('reset-password'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [reset_password_dto_1.ResetPasswordDto]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "reset", null);
-__decorate([
-    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Get)('me'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Post)('logout'),
-    __param(0, (0, common_1.Req)()),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], AuthController.prototype, "logout", null);
+], AuthController.prototype, "getMe", null);
 exports.AuthController = AuthController = __decorate([
-    (0, swagger_1.ApiTags)('auth'),
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])
 ], AuthController);

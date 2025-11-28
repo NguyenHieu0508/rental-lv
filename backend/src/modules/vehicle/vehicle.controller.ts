@@ -1,19 +1,20 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { VehicleService } from './vehicle.service';
+import { VehicleQueryDto } from './dto/vehicle-query.dto';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
 @Controller('vehicles')
 export class VehicleController {
-    constructor(private readonly service: VehicleService) { }
+    constructor(private service: VehicleService) { }
 
     @Get()
-    findAll(@Query('keyword') keyword?: string) {
-        return this.service.findAll(keyword);
+    list(@Query() query: VehicleQueryDto) {
+        return this.service.findAll(query);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
+    detail(@Param('id') id: string) {
         return this.service.findOne(id);
     }
 
@@ -22,13 +23,18 @@ export class VehicleController {
         return this.service.create(dto);
     }
 
-    @Patch(':id')
+    @Put(':id')
     update(@Param('id') id: string, @Body() dto: UpdateVehicleDto) {
         return this.service.update(id, dto);
     }
 
+    @Patch(':id/status')
+    updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
+        return this.service.updateStatus(id, body.status);
+    }
+
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.service.remove(id);
+    delete(@Param('id') id: string) {
+        return this.service.delete(id);
     }
 }

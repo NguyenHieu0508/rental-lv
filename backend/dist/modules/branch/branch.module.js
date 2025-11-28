@@ -8,6 +8,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BranchModule = void 0;
 const common_1 = require("@nestjs/common");
+const prisma_service_1 = require("../../prisma/prisma.service");
+const audit_log_service_1 = require("../audit-log/audit-log.service");
 const branch_service_1 = require("./branch.service");
 const branch_controller_1 = require("./branch.controller");
 let BranchModule = class BranchModule {
@@ -16,7 +18,8 @@ exports.BranchModule = BranchModule;
 exports.BranchModule = BranchModule = __decorate([
     (0, common_1.Module)({
         controllers: [branch_controller_1.BranchController],
-        providers: [branch_service_1.BranchService],
+        providers: [branch_service_1.BranchService, prisma_service_1.PrismaService, audit_log_service_1.AuditLogService],
+        exports: [branch_service_1.BranchService]
     })
 ], BranchModule);
 //# sourceMappingURL=branch.module.js.map

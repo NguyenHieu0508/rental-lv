@@ -1,42 +1,33 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UseGuards
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { RegisterDto } from './dto/register.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 
-@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) { }
-
-  @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.auth.register(dto);
-  }
+  constructor(private readonly authService: AuthService) { }
 
   @Post('login')
   login(@Body() dto: LoginDto) {
-    return this.auth.login(dto);
+    return this.authService.login(dto);
   }
 
-  @Post('forgot-password')
-  forgot(@Body() dto: ForgotPasswordDto) {
-    return this.auth.forgotPassword(dto);
+  @Post('register')
+  register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
-  @Post('reset-password')
-  reset(@Body() dto: ResetPasswordDto) {
-    return this.auth.resetPassword(dto);
-  }
-
-  @ApiBearerAuth()
+  @Get('me')
   @UseGuards(JwtAuthGuard)
-  @Post('logout')
-  logout(@Req() req: any) {
-    return this.auth.logout(req.user.userId);
+  getMe(@CurrentUser() user: any) {
+    return this.authService.me(user);
   }
 }

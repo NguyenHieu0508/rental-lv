@@ -14,41 +14,51 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BookingController = void 0;
 const common_1 = require("@nestjs/common");
-const swagger_1 = require("@nestjs/swagger");
 const booking_service_1 = require("./booking.service");
 const create_booking_dto_1 = require("./dto/create-booking.dto");
-const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const update_booking_dto_1 = require("./dto/update-booking.dto");
+const booking_query_dto_1 = require("./dto/booking-query.dto");
 let BookingController = class BookingController {
-    constructor(bookingService) {
-        this.bookingService = bookingService;
+    constructor(service) {
+        this.service = service;
     }
-    findAll() {
-        return this.bookingService.findAll();
+    list(query) {
+        return this.service.findAll(query);
     }
-    findOne(id) {
-        return this.bookingService.findOne(id);
+    detail(id) {
+        return this.service.findOne(id);
     }
     create(dto) {
-        return this.bookingService.create(dto);
+        return this.service.create(dto);
     }
-    updateStatus(id, status) {
-        return this.bookingService.updateStatus(id, status);
+    update(id, dto) {
+        return this.service.update(id, dto);
+    }
+    changeStatus(id, body) {
+        return this.service.changeStatus(id, body.status);
+    }
+    cancel(id, body) {
+        return this.service.cancel(id, body.reason);
+    }
+    delete(id) {
+        return this.service.delete(id);
     }
 };
 exports.BookingController = BookingController;
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [booking_query_dto_1.BookingQueryDto]),
     __metadata("design:returntype", void 0)
-], BookingController.prototype, "findAll", null);
+], BookingController.prototype, "list", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], BookingController.prototype, "findOne", null);
+], BookingController.prototype, "detail", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -57,17 +67,37 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], BookingController.prototype, "create", null);
 __decorate([
-    (0, common_1.Patch)(':id/status/:status'),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Param)('status')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, update_booking_dto_1.UpdateBookingDto]),
     __metadata("design:returntype", void 0)
-], BookingController.prototype, "updateStatus", null);
+], BookingController.prototype, "update", null);
+__decorate([
+    (0, common_1.Patch)(':id/status'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], BookingController.prototype, "changeStatus", null);
+__decorate([
+    (0, common_1.Patch)(':id/cancel'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], BookingController.prototype, "cancel", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], BookingController.prototype, "delete", null);
 exports.BookingController = BookingController = __decorate([
-    (0, swagger_1.ApiTags)('bookings'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('bookings'),
     __metadata("design:paramtypes", [booking_service_1.BookingService])
 ], BookingController);

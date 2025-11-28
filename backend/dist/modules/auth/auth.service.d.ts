@@ -1,37 +1,47 @@
-import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from './dto/register.dto';
+import { UserService } from '../user/user.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RegisterDto } from './dto/register.dto';
 export declare class AuthService {
-    private readonly prisma;
-    private readonly jwt;
-    constructor(prisma: PrismaService, jwt: JwtService);
-    register(dto: RegisterDto): Promise<{
-        accessToken: string;
-        user: {
-            id: string;
-            email: string;
-            role: string;
-        };
-    }>;
+    private jwtService;
+    private userService;
+    private audit;
+    constructor(jwtService: JwtService, userService: UserService, audit: AuditLogService);
+    validateUser(email: string, pass: string): Promise<{
+        id: string;
+        email: string;
+        password: string;
+        name: string | null;
+        role: string;
+        isActive: boolean;
+        lastLogin: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+    } | null>;
     login(dto: LoginDto): Promise<{
         accessToken: string;
         user: {
             id: string;
             email: string;
+            name: string | null;
             role: string;
         };
     }>;
-    logout(_userId: string): Promise<{
-        message: string;
+    register(dto: RegisterDto): Promise<{
+        id: string;
+        email: string;
+        name: string | null;
     }>;
-    forgotPassword(dto: ForgotPasswordDto): Promise<{
-        resetToken: string;
+    me(user: any): Promise<{
+        id: string;
+        email: string;
+        password: string;
+        name: string | null;
+        role: string;
+        isActive: boolean;
+        lastLogin: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
-    resetPassword(dto: ResetPasswordDto): Promise<{
-        message: string;
-    }>;
-    private generateToken;
 }

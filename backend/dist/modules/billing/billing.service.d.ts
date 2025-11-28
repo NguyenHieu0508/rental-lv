@@ -14,6 +14,8 @@ export declare class BillingService {
         subtotal: number;
         surchargeTotal: number;
         discountTotal: number;
+        vatPercent: number;
+        vatAmount: number;
         totalAmount: number;
         status: string;
         notes: string | null;
@@ -29,6 +31,8 @@ export declare class BillingService {
         subtotal: number;
         surchargeTotal: number;
         discountTotal: number;
+        vatPercent: number;
+        vatAmount: number;
         totalAmount: number;
         status: string;
         notes: string | null;
@@ -44,6 +48,8 @@ export declare class BillingService {
         subtotal: number;
         surchargeTotal: number;
         discountTotal: number;
+        vatPercent: number;
+        vatAmount: number;
         totalAmount: number;
         status: string;
         notes: string | null;

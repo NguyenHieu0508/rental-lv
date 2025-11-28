@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsInt } from 'class-validator';
 
 export class CreateVehicleCategoryDto {
     @IsString()
@@ -13,6 +13,26 @@ export class CreateVehicleCategoryDto {
     description?: string;
 
     @IsOptional()
-    @IsBoolean()
-    isActive?: boolean;
+    @IsString()
+    imageUrl?: string;
+
+    @IsOptional()
+    @IsString()
+    metaTitle?: string;
+
+    @IsOptional()
+    @IsString()
+    metaDescription?: string;
+
+    @IsOptional()
+    @IsString()
+    seoTitle?: string;
+
+    @IsOptional()
+    @IsString()
+    hTitle?: string;
+
+    @IsOptional()
+    @IsInt()
+    displayOrder?: number;
 }

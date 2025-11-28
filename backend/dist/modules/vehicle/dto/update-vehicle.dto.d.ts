@@ -1,5 +1,22 @@
-import { CreateVehicleDto } from './create-vehicle.dto';
-declare const UpdateVehicleDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreateVehicleDto>>;
-export declare class UpdateVehicleDto extends UpdateVehicleDto_base {
+export declare class UpdateVehicleDto {
+    name?: string;
+    vehicleType?: string;
+    licensePlate?: string;
+    brand?: string;
+    model?: string;
+    year?: number;
+    color?: string;
+    seatCount?: number;
+    transmission?: string;
+    fuelType?: string;
+    mileage?: number;
+    status?: string;
+    slug?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    seoDescription?: string;
+    photos?: string[];
+    categoryId?: string;
+    branchId?: string;
+    priceListId?: string;
 }
-export {};

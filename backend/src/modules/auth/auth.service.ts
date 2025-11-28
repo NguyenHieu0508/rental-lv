@@ -1,122 +1,91 @@
 import {
-  ConflictException,
+  BadRequestException,
   Injectable,
-  NotFoundException,
   UnauthorizedException
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
-
-import { RegisterDto } from './dto/register.dto';
+import * as bcrypt from 'bcryptjs';
+import { UserService } from '../user/user.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly jwt: JwtService
+    private jwtService: JwtService,
+    private userService: UserService,
+    private audit: AuditLogService
   ) { }
 
-  // REGISTER
-  async register(dto: RegisterDto) {
-    const exists = await this.prisma.user.findUnique({
-      where: { email: dto.email }
-    });
-    if (exists) throw new ConflictException('Email already registered');
+  async validateUser(email: string, pass: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) return null;
 
-    const hashed = await bcrypt.hash(dto.password, 10);
+    const match = await bcrypt.compare(pass, user.password);
+    if (!match) return null;
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        password: hashed,
-        name: dto.name,
-        role: 'USER'
-      }
-    });
+    if (!user.isActive) {
+      throw new UnauthorizedException('User is deactivated');
+    }
 
-    return this.generateToken(user.id, user.email, user.role);
+    return user;
   }
 
-  // LOGIN
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email }
-    });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    const user = await this.validateUser(dto.email, dto.password);
+    if (!user) {
+      await this.audit.log(null, 'LOGIN_FAILED', 'Auth', undefined, {
+        email: dto.email
+      });
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
-    const ok = await bcrypt.compare(dto.password, user.password);
-    if (!ok) throw new UnauthorizedException('Invalid credentials');
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role
+    };
 
-    return this.generateToken(user.id, user.email, user.role);
-  }
-
-  // LOGOUT (JWT lưu client, server chỉ trả message)
-  async logout(_userId: string) {
-    return { message: 'Logged out successfully' };
-  }
-
-  // FORGOT PASSWORD
-  async forgotPassword(dto: ForgotPasswordDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email }
-    });
-    if (!user) throw new NotFoundException('User not found');
-
-    const token = randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
-
-    await this.prisma.passwordResetToken.create({
-      data: {
-        userId: user.id,
-        token,
-        expiresAt: expires
-      }
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_SECRET || 'change-this-secret',
+      expiresIn: process.env.JWT_EXPIRES_IN || '1d'
     });
 
-    // TODO: gửi email, hiện tại trả ra để test
-    return { resetToken: token };
-  }
-
-  // RESET PASSWORD
-  async resetPassword(dto: ResetPasswordDto) {
-    const record = await this.prisma.passwordResetToken.findFirst({
-      where: { token: dto.token }
-    });
-
-    if (!record) throw new UnauthorizedException('Invalid token');
-    if (record.expiresAt < new Date())
-      throw new UnauthorizedException('Token expired');
-
-    const hashed = await bcrypt.hash(dto.newPassword, 10);
-
-    await this.prisma.user.update({
-      where: { id: record.userId },
-      data: { password: hashed }
-    });
-
-    await this.prisma.passwordResetToken.delete({
-      where: { id: record.id }
-    });
-
-    return { message: 'Password reset successfully' };
-  }
-
-  // PRIVATE: tạo JWT
-  private async generateToken(id: string, email: string, role: string) {
-    const payload = { sub: id, email, role };
-    const token = await this.jwt.signAsync(payload, {
-      secret: process.env.JWT_SECRET || 'super-secret-jwt-key',
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-    });
+    await this.userService.updateLastLogin(user.id);
+    await this.audit.log(user.id, 'LOGIN', 'Auth');
 
     return {
-      accessToken: token,
-      user: { id, email, role }
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }
     };
+  }
+
+  async register(dto: RegisterDto) {
+    const exists = await this.userService.findByEmail(dto.email);
+    if (exists) throw new BadRequestException('Email already exists');
+
+    const user = await this.userService.create({
+      email: dto.email,
+      password: dto.password,
+      name: dto.name
+    });
+
+    await this.audit.log(user.id, 'REGISTER', 'Auth', user.id);
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name
+    };
+  }
+
+  async me(user: any) {
+    return this.userService.findOne(user.id);
   }
 }
